@@ -26,6 +26,8 @@ Value *Interpreter::evaluateToken(const TokenExpression *expr) {
         return new StringValue(token.value);
     case ExpressionTokenType::InterpolatedString:
         return evaluateInterpolatedString(token.value);
+    case ExpressionTokenType::Number:
+        return new NumberValue(std::stod(token.value));
     default:
         return new NullValue();
     }

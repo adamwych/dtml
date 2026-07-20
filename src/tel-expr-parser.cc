@@ -18,7 +18,7 @@ ExpressionParseResult ExpressionParser::parseFunctionCall(Expression *source, co
     Vector<Expression *> args;
 
     while (true) {
-        auto arg = parse9();
+        auto arg = parse2();
         if (!arg.expression) {
             return arg;
         }
@@ -88,6 +88,22 @@ ExpressionToken ExpressionParser::parseToken() {
 
         return ExpressionToken{
             .type = ExpressionTokenType::InterpolatedString,
+            .value = String(_text.substr(start, end - start)),
+        };
+    }
+
+    // Number
+    if (_c.isAsciiDigit()) {
+        auto start = _c.pos();
+        while (_c.isAsciiDigit()) {
+            if (!_c.advance()) {
+                break;
+            }
+        }
+        auto end = _c.pos();
+
+        return ExpressionToken{
+            .type = ExpressionTokenType::Number,
             .value = String(_text.substr(start, end - start)),
         };
     }

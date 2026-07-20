@@ -8,6 +8,7 @@ enum class ExpressionTokenType {
     Identifier = 1,
     String = 2,
     InterpolatedString = 3,
+    Number = 4,
     Error = 255,
 };
 
@@ -20,6 +21,7 @@ struct ExpressionToken {
 	inline bool isIdentifier()         { return type == ExpressionTokenType::Identifier; }
 	inline bool isString()             { return type == ExpressionTokenType::String; }
 	inline bool isInterpolatedString() { return type == ExpressionTokenType::InterpolatedString; }
+	inline bool isNumber()             { return type == ExpressionTokenType::Number; }
 	inline bool isError()              { return type == ExpressionTokenType::Error; }
     /* clang-format on */
 };
