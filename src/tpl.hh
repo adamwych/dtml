@@ -105,8 +105,7 @@ class TemplateEvaluator {
     bool evaluateElementStart();
     bool evaluateElementEnd();
 
-    bool evaluatePartialStart(PartialElement *element);
-    bool evaluatePartialEnd(PartialElement *element);
+    bool evaluatePartial(PartialElement *element);
 
     bool evaluateRepeatStart(RepeatElement *element);
     bool evaluateRepeatEnd(RepeatElement *element);

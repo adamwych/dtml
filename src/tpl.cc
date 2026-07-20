@@ -21,6 +21,17 @@ TemplateEvaluationResult *TemplateEvaluator::evaluate(TemplateEvaluationContext 
         }
 
         if (_c.eat("<")) {
+            auto isComment = _c.eat("!--");
+            if (isComment) {
+                while (!_c.eat("-->")) {
+                    if (!_c.advance()) {
+                        error("unexpected end-of-file while parsing comment");
+                        break;
+                    }
+                }
+                continue;
+            }
+
             auto isElementEnd = _c.eat("/");
             if (isElementEnd) {
                 if (!evaluateElementEnd()) {
@@ -281,7 +292,7 @@ bool TemplateEvaluator::evaluateElementStart() {
             return true;
         }
 
-        return evaluatePartialStart(static_cast<PartialElement *>(element));
+        return evaluatePartial(static_cast<PartialElement *>(element));
     } else if (element->name == "repeat") {
         if (isSelfClosing) {
             delete element;
@@ -318,13 +329,6 @@ bool TemplateEvaluator::evaluateElementEnd() {
         return error("Mismatched element end tag");
     }
 
-    if (!_ctx->partialStack.empty()) {
-        auto topPartial = _ctx->partialStack.top();
-        if (topPartial == element && evaluatePartialEnd(topPartial)) {
-            return true;
-        }
-    }
-
     if (!_ctx->repeatStack.empty()) {
         auto topRepeat = _ctx->repeatStack.top();
         if (topRepeat == element && evaluateRepeatEnd(topRepeat)) {
@@ -342,12 +346,7 @@ bool TemplateEvaluator::evaluateElementEnd() {
     return true;
 }
 
-bool TemplateEvaluator::evaluatePartialStart(PartialElement *element) {
-    element->attributesRecord = new tel::RecordValue();
-    for (auto [name, value] : element->attributes) {
-        element->attributesRecord->properties[String(name)] = new tel::StringValue(value);
-    }
-
+bool TemplateEvaluator::evaluatePartial(PartialElement *element) {
     auto templateResponse = fetch(element->attributes["src"]);
     if (!templateResponse || templateResponse->statusCode != 200) {
         return true;
@@ -377,11 +376,17 @@ bool TemplateEvaluator::evaluatePartialStart(PartialElement *element) {
         return true;
     }
 
-    _ctx->partialStack.push(element);
+    element->attributesRecord = new tel::RecordValue();
+    for (auto [name, value] : element->attributes) {
+        element->attributesRecord->properties[String(name)] = new tel::StringValue(value);
+    }
 
     auto tpl = new Template(templateResponse->text.c_str());
     auto evaluator = new TemplateEvaluator(tpl);
+
+    _ctx->partialStack.push(element);
     auto result = evaluator->evaluate(_ctx);
+    _ctx->partialStack.pop();
 
     delete evaluator;
     delete tpl;
@@ -393,11 +398,6 @@ bool TemplateEvaluator::evaluatePartialStart(PartialElement *element) {
     _p.raw(result->getText());
 
     return true;
-}
-
-bool TemplateEvaluator::evaluatePartialEnd(PartialElement *element) {
-    _ctx->partialStack.pop();
-    return false;
 }
 
 bool TemplateEvaluator::evaluateRepeatStart(RepeatElement *element) {
