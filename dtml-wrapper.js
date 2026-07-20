@@ -1,9 +1,9 @@
-if (typeof createdtmlModule !== 'function') {
+if (typeof createDTMLModule !== 'function') {
     importScripts('@dtml/.build/emscripten/dtml.js')
 }
 
-async function createdtml() {
-    const m = await createdtmlModule({
+async function createDTML() {
+const m = await createDTMLModule({
         locateFile(path) {
             return `@dtml/.build/emscripten/${path}`
         }

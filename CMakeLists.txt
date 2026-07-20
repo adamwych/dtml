@@ -47,12 +47,12 @@ if(EMSCRIPTEN)
 
     target_link_options(dtml PRIVATE
         "SHELL:-sMODULARIZE=1"
-        "SHELL:-sEXPORT_NAME=createdtmlModule"
+        "SHELL:-sEXPORT_NAME=createDTMLModule"
         "SHELL:-sENVIRONMENT=web,worker"
         "SHELL:-sEXPORTED_FUNCTIONS=${dtml_EXPORTED_FUNCTIONS}"
         "SHELL:-sEXPORTED_RUNTIME_METHODS=[\"ccall\",\"cwrap\",\"UTF8ToString\"]"
         "SHELL:-sFILESYSTEM=0"
-        "SHELL:-sASSERTIONS=0"
+        "SHELL:-sASSERTIONS=1"
         "SHELL:-sSTACK_SIZE=131072"
         "SHELL:-sASYNCIFY=1"
         "SHELL:-sASYNCIFY_STACK_SIZE=131072"
