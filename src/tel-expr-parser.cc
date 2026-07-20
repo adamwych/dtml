@@ -47,7 +47,7 @@ ExpressionToken ExpressionParser::parseToken() {
     // Identifier
     if (_c.isAsciiLetter()) {
         auto start = _c.pos();
-        while (_c.isAsciiAlphanumeric()) {
+        while (_c.isAsciiAlphanumeric() || _c.is('_')) {
             if (!_c.advance()) {
                 break;
             }
