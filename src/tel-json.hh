@@ -5,5 +5,6 @@
 #include "tel-value.hh"
 
 namespace tel {
-Value *parseJson(const String &json);
+Value *fromJson(const String &json);
+String toJson(const Value *value);
 } // namespace tel

@@ -5,7 +5,7 @@
 #include <memory>
 
 TEST_CASE("parseJson parses a simple object") {
-    std::unique_ptr<tel::Value> value(tel::parseJson(R"({
+    std::unique_ptr<tel::Value> value(tel::fromJson(R"({
         "name": "Ada",
         "age": 42,
         "active": true,
@@ -35,7 +35,7 @@ TEST_CASE("parseJson parses a simple object") {
 }
 
 TEST_CASE("parseJson decodes unicode escapes") {
-    std::unique_ptr<tel::Value> value(tel::parseJson(R"({
+    std::unique_ptr<tel::Value> value(tel::fromJson(R"({
         "accented": "caf\u00E9",
         "emoji": "\uD83D\uDE00",
         "escaped": "\\u00E9",
@@ -61,7 +61,7 @@ TEST_CASE("parseJson decodes unicode escapes") {
 TEST_CASE("parseJson repairs unsafe unicode string content") {
     auto replacement = String("\xEF\xBF\xBD");
 
-    std::unique_ptr<tel::Value> value(tel::parseJson(R"({
+    std::unique_ptr<tel::Value> value(tel::fromJson(R"({
         "lead": "\uD83D",
         "trail": "\uDE00",
         "nul": "\u0000",
@@ -93,7 +93,7 @@ TEST_CASE("parseJson repairs invalid raw utf8 inside strings") {
     json.push_back(static_cast<char>(0xFF));
     json.append(R"("})");
 
-    std::unique_ptr<tel::Value> value(tel::parseJson(json));
+    std::unique_ptr<tel::Value> value(tel::fromJson(json));
 
     REQUIRE(value->isRecord());
 

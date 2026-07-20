@@ -24,34 +24,34 @@ class Value {
     virtual ~Value() = default;
 
     /// Gets human-readable representation of this value.
-    virtual String print() = 0;
+    virtual String print() const = 0;
 
     /// Gets the type disciminator of this value.
-    virtual ValueType getType() = 0;
+    virtual ValueType getType() const = 0;
 
     /* clang-format off */
-    inline bool isNull()    { return getType() == ValueType::Null; }
-    inline bool isArray()   { return getType() == ValueType::Array; }
-    inline bool isRecord()  { return getType() == ValueType::Record; }
-    inline bool isString()  { return getType() == ValueType::String; }
-    inline bool isNumber()  { return getType() == ValueType::Number; }
-    inline bool isBoolean() { return getType() == ValueType::Boolean; }
+    inline bool isNull()      const { return getType() == ValueType::Null; }
+    inline bool isArray()     const { return getType() == ValueType::Array; }
+    inline bool isRecord()    const { return getType() == ValueType::Record; }
+    inline bool isString()    const { return getType() == ValueType::String; }
+    inline bool isNumber()    const { return getType() == ValueType::Number; }
+    inline bool isBoolean()   const { return getType() == ValueType::Boolean; }
 
-    NullValue *asNull()       { return (NullValue *)this; }
-    ArrayValue *asArray()     { return (ArrayValue *)this; }
-    RecordValue *asRecord()   { return (RecordValue *)this; }
-    StringValue *asString()   { return (StringValue *)this; }
-    NumberValue *asNumber()   { return (NumberValue *)this; }
-    BooleanValue *asBoolean() { return (BooleanValue *)this; }
+    NullValue *asNull()       const { return (NullValue *)this; }
+    ArrayValue *asArray()     const { return (ArrayValue *)this; }
+    RecordValue *asRecord()   const { return (RecordValue *)this; }
+    StringValue *asString()   const { return (StringValue *)this; }
+    NumberValue *asNumber()   const { return (NumberValue *)this; }
+    BooleanValue *asBoolean() const { return (BooleanValue *)this; }
     /* clang-format on */
 };
 
 class NullValue : public Value {
   public:
-    virtual String print() {
+    virtual String print() const {
         return "null";
     }
-    virtual ValueType getType() {
+    virtual ValueType getType() const {
         return ValueType::Null;
     }
 };
@@ -68,7 +68,7 @@ class ArrayValue : public Value {
         return elements.size();
     }
 
-    virtual String print() {
+    virtual String print() const {
         auto out = String();
         out.append("[");
         for (auto elementIdx = 0; elementIdx < elements.size(); elementIdx++) {
@@ -81,7 +81,7 @@ class ArrayValue : public Value {
         out.append("]");
         return out;
     }
-    virtual ValueType getType() {
+    virtual ValueType getType() const {
         return ValueType::Array;
     }
 };
@@ -90,19 +90,22 @@ class RecordValue : public Value {
   public:
     Map<String, Value *> properties;
 
-    virtual String print() {
+    virtual String print() const {
+        auto idx = 0;
         auto out = String();
         out.append("{");
         for (auto [name, value] : properties) {
             out.append(name);
             out.append(" = ");
             out.append(value->print());
-            out.append(", ");
+            if (idx++ < properties.size() - 1) {
+                out.append(", ");
+            }
         }
         out.append("}");
         return out;
     }
-    virtual ValueType getType() {
+    virtual ValueType getType() const {
         return ValueType::Record;
     }
 };
@@ -118,14 +121,14 @@ class StringValue : public Value {
     explicit StringValue(StringView value) : value(value) {
     }
 
-    virtual String print() {
+    virtual String print() const {
         auto out = String();
         out.append("\"");
         out.append(value);
         out.append("\"");
         return out;
     }
-    virtual ValueType getType() {
+    virtual ValueType getType() const {
         return ValueType::String;
     }
 };
@@ -137,10 +140,10 @@ class NumberValue : public Value {
     explicit NumberValue(double value) : value(value) {
     }
 
-    virtual String print() {
+    virtual String print() const {
         return std::to_string(value);
     }
-    virtual ValueType getType() {
+    virtual ValueType getType() const {
         return ValueType::Number;
     }
 };
@@ -152,10 +155,10 @@ class BooleanValue : public Value {
     explicit BooleanValue(bool value) : value(value) {
     }
 
-    virtual String print() {
+    virtual String print() const {
         return value ? "true" : "false";
     }
-    virtual ValueType getType() {
+    virtual ValueType getType() const {
         return ValueType::Boolean;
     }
 };

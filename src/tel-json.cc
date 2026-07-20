@@ -91,7 +91,7 @@ static Value *parseJsonValue(JsonParseContext *ctx) {
     }
 }
 
-Value *parseJson(const String &json) {
+Value *fromJson(const String &json) {
     constexpr int tokenCount = 4096;
 
     jsmn_parser parser;
@@ -118,5 +118,62 @@ Value *parseJson(const String &json) {
     }
 
     return value;
+}
+
+String toJson(const Value *value) {
+    switch (value->getType()) {
+    case ValueType::Null:
+        return "null";
+
+    case ValueType::String: {
+        auto out = String();
+        out.append("\"");
+        out.append(value->asString()->value);
+        out.append("\"");
+        return out;
+    }
+
+    case ValueType::Number:
+        return std::to_string(value->asNumber()->value);
+
+    case ValueType::Boolean:
+        return value->asBoolean()->value ? "true" : "false";
+
+    case ValueType::Array: {
+        auto elements = value->asArray()->elements;
+        auto out = String();
+        out.append("[");
+        for (auto elementIdx = 0; elementIdx < elements.size(); elementIdx++) {
+            auto element = elements[elementIdx];
+            out.append(toJson(element));
+            if (elementIdx != elements.size() - 1) {
+                out.append(", ");
+            }
+        }
+        out.append("]");
+        return out;
+    }
+
+    case ValueType::Record: {
+        auto properties = value->asRecord()->properties;
+        auto out = String();
+        out.append("{");
+        auto idx = 0;
+        for (auto [name, value] : properties) {
+            out.append("\"");
+            out.append(name);
+            out.append("\"");
+            out.append(": ");
+            out.append(toJson(value));
+            if (idx++ < properties.size() - 1) {
+                out.append(", ");
+            }
+        }
+        out.append("}");
+        return out;
+    }
+    default:
+        return String();
+    }
 }
 } // namespace tel

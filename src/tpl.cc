@@ -370,7 +370,7 @@ bool TemplateEvaluator::evaluatePartial(PartialElement *element) {
         _p.raw(templateResponse->text);
         _p.raw(";</script>");
 
-        auto value = tel::parseJson(templateResponse->text);
+        auto value = tel::fromJson(templateResponse->text);
         _ctx->exprContext.addGlobal(as, value);
 
         return true;
@@ -405,7 +405,7 @@ bool TemplateEvaluator::evaluateRepeatStart(RepeatElement *element) {
 
     auto srcResponse = fetch(element->attributes["in"]);
     if (srcResponse && srcResponse->statusCode == 200) {
-        auto value = tel::parseJson(srcResponse->text);
+        auto value = tel::fromJson(srcResponse->text);
         if (value->isArray()) {
             element->array = value->asArray();
         } else if (value->isRecord()) {

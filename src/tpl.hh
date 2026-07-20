@@ -53,7 +53,7 @@ struct TemplateEvaluationContext {
 
     explicit TemplateEvaluationContext(TemplateCache *cache, const char *routeParamsJSON)
         : cache(cache) {
-        exprContext.addGlobal("route", tel::parseJson(routeParamsJSON));
+        exprContext.addGlobal("route", tel::fromJson(routeParamsJSON));
     }
 };
 

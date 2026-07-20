@@ -57,16 +57,25 @@ static Value *join(const EvaluationContext *ctx, const FunctionCallExpression *e
     return new StringValue(str);
 }
 
+static Value *stringify(const EvaluationContext *ctx, const FunctionCallExpression *expr,
+                        Value *source) {
+    if (!source) {
+        return new NullValue();
+    }
+    return new StringValue(tel::toJson(source));
+}
+
 static Value *call(const EvaluationContext *ctx, const FunctionCallExpression *expr,
                    Value *source) {
-    auto name = expr->name;
+#define TRY(n)                                                                                     \
+    if (expr->name == #n)                                                                          \
+    return n(ctx, expr, source)
 
-    if (name == "map") {
-        return map(ctx, expr, source);
-    } else if (name == "join") {
-        return join(ctx, expr, source);
-    }
+    TRY(map);
+    TRY(join);
+    TRY(stringify);
 
+#undef TRY
     return new NullValue();
 }
 } // namespace builtin
