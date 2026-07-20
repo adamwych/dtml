@@ -1,4 +1,5 @@
 #include "tel-json.hh"
+#include "utils-unicode.hh"
 
 #include <iomanip>
 #include <iostream>
@@ -53,7 +54,8 @@ static Value *parseJsonObject(JsonParseContext *ctx) {
 
 static Value *parseJsonString(JsonParseContext *ctx) {
     auto token = ctx->tokens[ctx->pos - 1];
-    return new StringValue(ctx->json.substr(token.start, token.end - token.start));
+    auto tokenValue = String(ctx->json.substr(token.start, token.end - token.start));
+    return new StringValue(decodeJsonStringEscapes(tokenValue));
 }
 
 static Value *parseJsonPrimitive(JsonParseContext *ctx) {

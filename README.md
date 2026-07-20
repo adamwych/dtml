@@ -66,7 +66,10 @@ The `<repeat>` element fetches an array from address specified by the `src` attr
 
 ## Credits
 
-dtml uses the [jsmn](https://github.com/zserge/jsmn) library to parse JSON.
+DTML uses the following third party libraries:
+
+- [jsmn](https://github.com/zserge/jsmn)
+- [utfcpp](https://github.com/nemtrif/utfcpp)
 
 ## License
 
