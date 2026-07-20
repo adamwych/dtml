@@ -1,6 +1,6 @@
 #include "tpl-printer.hh"
 
-namespace dhtml {
+namespace dtml {
 void TemplatePrinter::enablePrinting() {
     if (_disabledDepth > 0) {
         _disabledDepth--;
@@ -59,4 +59,4 @@ void TemplatePrinter::printElementClose(const StringView &name) {
     raw(name);
     raw(">");
 }
-} // namespace dhtml
+} // namespace dtml

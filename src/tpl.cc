@@ -4,7 +4,7 @@
 
 #include "tel.hh"
 
-namespace dhtml {
+namespace dtml {
 TemplateEvaluationResult *TemplateEvaluator::evaluate(TemplateEvaluationContext *ctx) {
     _error = nullptr;
     _ctx = ctx;
@@ -494,4 +494,4 @@ FetchResponse *TemplateEvaluator::fetch(const String &url) {
 
     return &_ctx->cache->fetchCache[url];
 }
-} // namespace dhtml
+} // namespace dtml

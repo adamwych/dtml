@@ -6,7 +6,7 @@
 #include "tpl-cursor.hh"
 #include "tpl-printer.hh"
 
-namespace dhtml {
+namespace dtml {
 struct Element {
     virtual ~Element() = default;
 
@@ -124,4 +124,4 @@ class TemplateEvaluator {
 
     TemplateEvaluationResult *evaluate(TemplateEvaluationContext *ctx);
 };
-} // namespace dhtml
+} // namespace dtml

@@ -2,7 +2,7 @@
 
 #include "common.hh"
 
-namespace dhtml {
+namespace dtml {
 struct TemplateLocation {
     int line;
     int column;
@@ -59,4 +59,4 @@ class TemplateCursor {
         return TemplateLocation{.line = _line, .column = _column};
     }
 };
-} // namespace dhtml
+} // namespace dtml

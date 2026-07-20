@@ -8,65 +8,65 @@
 #define EXPORT
 #endif
 
-namespace dhtml {
+namespace dtml {
 
 /* clang-format off */
 
 // Template
-EXPORT Template *DHTML_Template_New(const char *source) {
+EXPORT Template *dtml_Template_New(const char *source) {
     return new Template(source);
 }
-EXPORT void DHTML_Template_Free(Template *self) {
+EXPORT void dtml_Template_Free(Template *self) {
     delete self;
 }
 
 // TemplateCache
-EXPORT TemplateCache *DHTML_TemplateCache_New() {
+EXPORT TemplateCache *dtml_TemplateCache_New() {
     return new TemplateCache();
 }
-EXPORT void DHTML_TemplateCache_Free(TemplateCache *self) {
+EXPORT void dtml_TemplateCache_Free(TemplateCache *self) {
     delete self;
 }
-EXPORT void DHTML_TemplateCache_Clear(TemplateCache *self) {
+EXPORT void dtml_TemplateCache_Clear(TemplateCache *self) {
     self->fetchCache.clear();
 }
 
 // TemplateEvaluationContext
-EXPORT TemplateEvaluationContext *DHTML_TemplateEvaluationContext_New(TemplateCache *cache, const char *routeParamsJSON) {
+EXPORT TemplateEvaluationContext *dtml_TemplateEvaluationContext_New(TemplateCache *cache, const char *routeParamsJSON) {
     return new TemplateEvaluationContext(cache, routeParamsJSON);
 }
-EXPORT void DHTML_TemplateEvaluationContext_Free(TemplateEvaluationContext *self) {
+EXPORT void dtml_TemplateEvaluationContext_Free(TemplateEvaluationContext *self) {
     delete self;
 }
 
 // TemplateEvaluator
-EXPORT TemplateEvaluator *DHTML_TemplateEvaluator_New(Template *tpl) {
+EXPORT TemplateEvaluator *dtml_TemplateEvaluator_New(Template *tpl) {
     return new TemplateEvaluator(tpl);
 }
-EXPORT void DHTML_TemplateEvaluator_Free(TemplateEvaluator *self) {
+EXPORT void dtml_TemplateEvaluator_Free(TemplateEvaluator *self) {
     delete self;
 }
-EXPORT TemplateEvaluationResult *DHTML_TemplateEvaluator_Evaluate(TemplateEvaluator *self, TemplateEvaluationContext *ctx) {
+EXPORT TemplateEvaluationResult *dtml_TemplateEvaluator_Evaluate(TemplateEvaluator *self, TemplateEvaluationContext *ctx) {
     return self->evaluate(ctx);
 }
 
 // TemplateEvaluationResult
-EXPORT void DHTML_TemplateEvaluationResult_Free(TemplateEvaluationResult *self) {
+EXPORT void dtml_TemplateEvaluationResult_Free(TemplateEvaluationResult *self) {
     delete self;
 }
-EXPORT const char *DHTML_TemplateEvaluationResult_GetText(TemplateEvaluationResult *self) {
+EXPORT const char *dtml_TemplateEvaluationResult_GetText(TemplateEvaluationResult *self) {
     return self->getText();
 }
-EXPORT bool DHTML_TemplateEvaluationResult_IsError(TemplateEvaluationResult *self) {
+EXPORT bool dtml_TemplateEvaluationResult_IsError(TemplateEvaluationResult *self) {
     return self->isError();
 }
-EXPORT int DHTML_TemplateEvaluationResult_GetErrorLocationLine(TemplateEvaluationResult *self) {
+EXPORT int dtml_TemplateEvaluationResult_GetErrorLocationLine(TemplateEvaluationResult *self) {
     return self->getErrorLocation().line;
 }
-EXPORT int DHTML_TemplateEvaluationResult_GetErrorLocationColumn(TemplateEvaluationResult *self) {
+EXPORT int dtml_TemplateEvaluationResult_GetErrorLocationColumn(TemplateEvaluationResult *self) {
     return self->getErrorLocation().column;
 }
 
 /* clang-format on */
 
-} // namespace dhtml
+} // namespace dtml

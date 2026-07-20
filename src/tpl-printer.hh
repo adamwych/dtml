@@ -2,7 +2,7 @@
 
 #include "common.hh"
 
-namespace dhtml {
+namespace dtml {
 class TemplatePrinter {
     String _output;
     int _disabledDepth = 0;
@@ -27,4 +27,4 @@ class TemplatePrinter {
         return _output;
     }
 };
-} // namespace dhtml
+} // namespace dtml

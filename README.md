@@ -66,7 +66,7 @@ The `<repeat>` element fetches an array from address specified by the `src` attr
 
 ## Credits
 
-DHTML uses the [jsmn](https://github.com/zserge/jsmn) library to parse JSON.
+dtml uses the [jsmn](https://github.com/zserge/jsmn) library to parse JSON.
 
 ## License
 

@@ -1,9 +1,9 @@
 cmake_minimum_required(VERSION 4.0)
 
-project(dhtml LANGUAGES CXX)
+project(dtml LANGUAGES CXX)
 
-option(DHTML_BUILD_TESTS "Build dhtml tests" OFF)
-option(DHTML_BUILD_BENCHMARKS "Build dhtml benchmarks" OFF)
+option(dtml_BUILD_TESTS "Build dtml tests" OFF)
+option(dtml_BUILD_BENCHMARKS "Build dtml benchmarks" OFF)
 
 set(SOURCES
     src/bindings.cc
@@ -18,38 +18,38 @@ set(SOURCES
 if(EMSCRIPTEN)
     set(CMAKE_BUILD_TYPE Release CACHE STRING "Build type" FORCE)
 
-    add_executable(dhtml ${SOURCES})
+    add_executable(dtml ${SOURCES})
 
-    set_target_properties(dhtml PROPERTIES SUFFIX ".js")
+    set_target_properties(dtml PROPERTIES SUFFIX ".js")
 
-    target_sources(dhtml PRIVATE src/fetch-emscripten.cc)
-    target_compile_definitions(dhtml PRIVATE TARGET_EMSCRIPTEN)
+    target_sources(dtml PRIVATE src/fetch-emscripten.cc)
+    target_compile_definitions(dtml PRIVATE TARGET_EMSCRIPTEN)
 
-    string(CONCAT DHTML_EXPORTED_FUNCTIONS
+    string(CONCAT dtml_EXPORTED_FUNCTIONS
         "["
-        "\"_DHTML_Template_New\","
-        "\"_DHTML_Template_Free\","
-        "\"_DHTML_TemplateCache_New\","
-        "\"_DHTML_TemplateCache_Free\","
-        "\"_DHTML_TemplateCache_Clear\","
-        "\"_DHTML_TemplateEvaluationContext_New\","
-        "\"_DHTML_TemplateEvaluationContext_Free\","
-        "\"_DHTML_TemplateEvaluator_New\","
-        "\"_DHTML_TemplateEvaluator_Free\","
-        "\"_DHTML_TemplateEvaluator_Evaluate\","
-        "\"_DHTML_TemplateEvaluationResult_Free\","
-        "\"_DHTML_TemplateEvaluationResult_GetText\","
-        "\"_DHTML_TemplateEvaluationResult_IsError\","
-        "\"_DHTML_TemplateEvaluationResult_GetErrorLocationLine\","
-        "\"_DHTML_TemplateEvaluationResult_GetErrorLocationColumn\""
+        "\"_dtml_Template_New\","
+        "\"_dtml_Template_Free\","
+        "\"_dtml_TemplateCache_New\","
+        "\"_dtml_TemplateCache_Free\","
+        "\"_dtml_TemplateCache_Clear\","
+        "\"_dtml_TemplateEvaluationContext_New\","
+        "\"_dtml_TemplateEvaluationContext_Free\","
+        "\"_dtml_TemplateEvaluator_New\","
+        "\"_dtml_TemplateEvaluator_Free\","
+        "\"_dtml_TemplateEvaluator_Evaluate\","
+        "\"_dtml_TemplateEvaluationResult_Free\","
+        "\"_dtml_TemplateEvaluationResult_GetText\","
+        "\"_dtml_TemplateEvaluationResult_IsError\","
+        "\"_dtml_TemplateEvaluationResult_GetErrorLocationLine\","
+        "\"_dtml_TemplateEvaluationResult_GetErrorLocationColumn\""
         "]"
     )
 
-    target_link_options(dhtml PRIVATE
+    target_link_options(dtml PRIVATE
         "SHELL:-sMODULARIZE=1"
-        "SHELL:-sEXPORT_NAME=createDHTMLModule"
+        "SHELL:-sEXPORT_NAME=createdtmlModule"
         "SHELL:-sENVIRONMENT=web,worker"
-        "SHELL:-sEXPORTED_FUNCTIONS=${DHTML_EXPORTED_FUNCTIONS}"
+        "SHELL:-sEXPORTED_FUNCTIONS=${dtml_EXPORTED_FUNCTIONS}"
         "SHELL:-sEXPORTED_RUNTIME_METHODS=[\"ccall\",\"cwrap\",\"UTF8ToString\"]"
         "SHELL:-sFILESYSTEM=0"
         "SHELL:-sASSERTIONS=0"
@@ -58,21 +58,21 @@ if(EMSCRIPTEN)
         "SHELL:-sASYNCIFY_STACK_SIZE=131072"
     )
 else()
-    add_library(dhtml ${SOURCES})
-    target_sources(dhtml PRIVATE src/fetch-native.cc)
-    target_compile_definitions(dhtml PRIVATE TARGET_NATIVE)
+    add_library(dtml ${SOURCES})
+    target_sources(dtml PRIVATE src/fetch-native.cc)
+    target_compile_definitions(dtml PRIVATE TARGET_NATIVE)
 endif()
 
-set_target_properties(dhtml PROPERTIES
+set_target_properties(dtml PROPERTIES
     CXX_STANDARD 17
     CXX_STANDARD_REQUIRED ON
     CXX_EXTENSIONS OFF
-    OUTPUT_NAME dhtml
+    OUTPUT_NAME dtml
 )
 
-target_include_directories(dhtml PUBLIC src)
+target_include_directories(dtml PUBLIC src)
 
-if((DHTML_BUILD_TESTS OR DHTML_BUILD_BENCHMARKS) AND NOT EMSCRIPTEN)
+if((dtml_BUILD_TESTS OR dtml_BUILD_BENCHMARKS) AND NOT EMSCRIPTEN)
     include(FetchContent)
 
     FetchContent_Declare(
@@ -83,11 +83,11 @@ if((DHTML_BUILD_TESTS OR DHTML_BUILD_BENCHMARKS) AND NOT EMSCRIPTEN)
     FetchContent_MakeAvailable(Catch2)
 endif()
 
-if(DHTML_BUILD_TESTS AND NOT EMSCRIPTEN)
+if(dtml_BUILD_TESTS AND NOT EMSCRIPTEN)
     enable_testing()
 
     add_executable(tel-json-test tests/tel-json-test.cc)
-    target_link_libraries(tel-json-test PRIVATE dhtml Catch2::Catch2WithMain)
+    target_link_libraries(tel-json-test PRIVATE dtml Catch2::Catch2WithMain)
 
     set_target_properties(tel-json-test PROPERTIES
         CXX_STANDARD 17
@@ -100,9 +100,9 @@ if(DHTML_BUILD_TESTS AND NOT EMSCRIPTEN)
     catch_discover_tests(tel-json-test)
 endif()
 
-if(DHTML_BUILD_BENCHMARKS AND NOT EMSCRIPTEN)
+if(dtml_BUILD_BENCHMARKS AND NOT EMSCRIPTEN)
     add_executable(tel-json-benchmark bench/tel-json-benchmark.cc)
-    target_link_libraries(tel-json-benchmark PRIVATE dhtml Catch2::Catch2WithMain)
+    target_link_libraries(tel-json-benchmark PRIVATE dtml Catch2::Catch2WithMain)
     target_compile_definitions(tel-json-benchmark PRIVATE CATCH_CONFIG_ENABLE_BENCHMARKING)
 
     set_target_properties(tel-json-benchmark PROPERTIES

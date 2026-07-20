@@ -14,7 +14,7 @@ static int utf8CharLength(unsigned char ch) {
 }
 } // namespace
 
-namespace dhtml {
+namespace dtml {
 bool TemplateCursor::advance() {
     _pos++;
 
@@ -109,4 +109,4 @@ bool TemplateCursor::isWhitespace() {
 bool TemplateCursor::isAtEnd() {
     return _pos >= _source.length();
 }
-} // namespace dhtml
+} // namespace dtml
