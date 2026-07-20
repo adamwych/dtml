@@ -2,6 +2,16 @@
 
 #include "common.hh"
 
+static bool stringEndsWith(const String &str, const String &with) {
+    long pos = str.length() - with.length();
+    if (pos < 0) {
+        return false;
+    }
+
+    auto slice = str.substr(pos);
+    return slice == with;
+}
+
 static String encodeHTML(const String &data) {
     String buffer;
     buffer.reserve(data.size() * 1.1);

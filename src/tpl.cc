@@ -466,7 +466,8 @@ bool TemplateEvaluator::error(const String &reason, TemplateLocation location) {
 }
 
 FetchResponse *TemplateEvaluator::fetch(const String &url) {
-    if (_ctx->cache->fetchCache.count(url) == 0) {
+    auto canBeCached = stringEndsWith(url, ".html") || stringEndsWith(url, ".json");
+    if (!canBeCached || _ctx->cache->fetchCache.count(url) == 0) {
         uint8_t *responseData;
         int responseDataLen;
         int errorCode = -1;
