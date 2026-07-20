@@ -6,7 +6,8 @@ namespace tel {
 Value *Interpreter::evaluate(const StringView &text) {
     auto parseResult = ExpressionParser{text}.parse();
     if (!parseResult.error.empty()) {
-        printf("Failed to parse expression '%s': %s\n", String(text).c_str(), parseResult.error.c_str());
+        printf("Failed to parse expression '%s': %s\n", String(text).c_str(),
+               parseResult.error.c_str());
         return new NullValue();
     }
 
@@ -47,7 +48,7 @@ Value *Interpreter::evaluateMemberAccess(const MemberAccessExpression *expr) {
 
 Value *Interpreter::evaluateFunctionCall(const FunctionCallExpression *expr) {
     auto source = expr->source ? evaluate(expr->source) : nullptr;
-    return builtin::call(expr, source);
+    return builtin::call(&_ctx, expr, source);
 }
 
 Value *Interpreter::evaluate(const Expression *expr) {

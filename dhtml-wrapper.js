@@ -23,8 +23,6 @@ async function createDHTML() {
     const cachePtr = m._DHTML_TemplateCache_New()
 
     return {
-        setI18n(key, value) {},
-
         clearTemplateCache() {
             m._DHTML_TemplateCache_Clear(cachePtr)
         },

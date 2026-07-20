@@ -5,16 +5,7 @@
 
 namespace tel {
 namespace builtin {
-static Value *tr(const FunctionCallExpression *expr) {
-    if (expr->args.size() != 1 || !expr->args[0]->isToken()) {
-        return new NullValue();
-    }
-
-    auto key = expr->args[0];
-    return new StringValue(key->asToken()->token.value);
-}
-
-static Value *map(const FunctionCallExpression *expr, Value *source) {
+static Value *map(const EvaluationContext *ctx, const FunctionCallExpression *expr, Value *source) {
     if (!source || !source->isArray() || expr->args.size() != 1 || !expr->args[0]->isToken()) {
         return new NullValue();
     }
@@ -43,11 +34,8 @@ static Value *map(const FunctionCallExpression *expr, Value *source) {
     return out;
 }
 
-static Value *join(const FunctionCallExpression *expr, Value *source) {
-    if (!source || !source->isArray()) {
-        printf("not an array: %s\n", source->print().c_str());
-    }
-
+static Value *join(const EvaluationContext *ctx, const FunctionCallExpression *expr,
+                   Value *source) {
     if (!source || !source->isArray() || expr->args.size() != 1 || !expr->args[0]->isToken()) {
         return new NullValue();
     }
@@ -69,15 +57,14 @@ static Value *join(const FunctionCallExpression *expr, Value *source) {
     return new StringValue(str);
 }
 
-static Value *call(const FunctionCallExpression *expr, Value *source) {
+static Value *call(const EvaluationContext *ctx, const FunctionCallExpression *expr,
+                   Value *source) {
     auto name = expr->name;
 
-    if (name == "tr") {
-        return tr(expr);
-    } else if (name == "map") {
-        return map(expr, source);
+    if (name == "map") {
+        return map(ctx, expr, source);
     } else if (name == "join") {
-        return join(expr, source);
+        return join(ctx, expr, source);
     }
 
     return new NullValue();
