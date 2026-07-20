@@ -65,6 +65,14 @@ static Value *stringify(const EvaluationContext *ctx, const FunctionCallExpressi
     return new StringValue(tel::toJson(source));
 }
 
+static Value *round(const EvaluationContext *ctx, const FunctionCallExpression *expr,
+                    Value *source) {
+    if (!source || !source->isNumber()) {
+        return new NullValue();
+    }
+    return new StringValue(std::to_string(static_cast<int>(::round(source->asNumber()->value))));
+}
+
 static Value *call(const EvaluationContext *ctx, const FunctionCallExpression *expr,
                    Value *source) {
 #define TRY(n)                                                                                     \
@@ -74,6 +82,7 @@ static Value *call(const EvaluationContext *ctx, const FunctionCallExpression *e
     TRY(map);
     TRY(join);
     TRY(stringify);
+    TRY(round);
 
 #undef TRY
     return new NullValue();
