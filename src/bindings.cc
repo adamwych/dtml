@@ -32,8 +32,12 @@ EXPORT void dtml_TemplateCache_Clear(TemplateCache *self) {
 }
 
 // TemplateEvaluationContext
-EXPORT TemplateEvaluationContext *dtml_TemplateEvaluationContext_New(TemplateCache *cache, const char *routeParamsJSON) {
-    return new TemplateEvaluationContext(cache, routeParamsJSON);
+EXPORT TemplateEvaluationContext *dtml_TemplateEvaluationContext_New(
+	TemplateCache *cache,
+	const char *routeParamsJSON,
+	const char *customProtocolsJSON
+) {
+    return new TemplateEvaluationContext(cache, routeParamsJSON, customProtocolsJSON);
 }
 EXPORT void dtml_TemplateEvaluationContext_Free(TemplateEvaluationContext *self) {
     delete self;

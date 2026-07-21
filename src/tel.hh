@@ -29,13 +29,12 @@ class Interpreter {
     Value *evaluateMemberAccess(const MemberAccessExpression *expr);
     Value *evaluateFunctionCall(const FunctionCallExpression *expr);
 
-    Value *evaluateInterpolatedString(const String &text);
-
   public:
     Interpreter(EvaluationContext ctx) : _ctx(ctx) {
     }
 
     Value *evaluate(const StringView &text);
     Value *evaluate(const Expression *expr);
+    Value *evaluateInterpolatedString(const String &text);
 };
 } // namespace tel

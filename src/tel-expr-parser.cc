@@ -45,9 +45,9 @@ ExpressionParseResult ExpressionParser::parseFunctionCall(Expression *source, co
 
 ExpressionToken ExpressionParser::parseToken() {
     // Identifier
-    if (_c.isAsciiLetter()) {
+    if (_c.isAsciiLetter() || _c.is('_') || _c.is('$')) {
         auto start = _c.pos();
-        while (_c.isAsciiAlphanumeric() || _c.is('_')) {
+        while (_c.isAsciiAlphanumeric() || _c.is('_') || _c.is('$')) {
             if (!_c.advance()) {
                 break;
             }

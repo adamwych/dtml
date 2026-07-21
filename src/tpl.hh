@@ -49,12 +49,25 @@ struct TemplateEvaluationContext {
     Stack<RepeatElement *> repeatStack;
     int emptyRepeatDepth = 0;
 
+    Map<String, String> customProtocols;
+
     tel::EvaluationContext exprContext;
 
-    explicit TemplateEvaluationContext(TemplateCache *cache, const char *routeParamsJSON)
-        : cache(cache) {
-        exprContext.addGlobal("route", tel::fromJson(routeParamsJSON));
+    /* clang-format off */
+    explicit TemplateEvaluationContext(
+		TemplateCache *cache,
+		const char *routeParamsJSON,
+        const char *customProtocolsJSON
+	) : cache(cache)
+	{
+        exprContext.addGlobal("$route", tel::fromJson(routeParamsJSON));
+
+		auto customProtocolsRecord = tel::fromJson(customProtocolsJSON)->asRecord();
+		for (auto [protocol, replacement] : customProtocolsRecord->properties) {
+			customProtocols[protocol + "://"] = replacement->asString()->value;
+		}
     }
+    /* clang-format on */
 };
 
 class TemplateEvaluationResult {
@@ -118,8 +131,13 @@ class TemplateEvaluator {
     FetchResponse *fetch(const String &url);
 
   public:
-    explicit TemplateEvaluator(const Template *tpl)
-        : _source{tpl->getSource()}, _c{_source}, _p{_source.length()} {};
+    /* clang-format off */
+    explicit TemplateEvaluator(const Template *tpl) :
+		_source{tpl->getSource()},
+		_c{_source},
+		_p{_source.length()}
+	{};
+    /* clang-format on */
 
     TemplateEvaluationResult *evaluate(TemplateEvaluationContext *ctx);
 };

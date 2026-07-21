@@ -47,7 +47,7 @@ To build and test take a look at the `scripts` directory.
 <h1>{todo.title}</h1>
 
 <!-- String interpolation -->
-<a href="{`https://example.com/todos/${todo.id}`}"></a>
+<a href="https://example.com/todos/${todo.id}"></a>
 ```
 
 ---

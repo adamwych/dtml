@@ -1,16 +1,20 @@
 if (typeof createDTMLModule !== 'function') {
-    importScripts('@dtml/.build/emscripten/dtml.js')
+    importScripts('/lib/dtml/.build/emscripten/dtml.js')
 }
 
 async function createDTML() {
-const m = await createDTMLModule({
+    const m = await createDTMLModule({
         locateFile(path) {
-            return `@dtml/.build/emscripten/${path}`
+            return `/lib/dtml/.build/emscripten/${path}`
         }
     })
 
     const templateNew = m.cwrap('dtml_Template_New', 'number', ['string'])
-    const templateEvaluationContextNew = m.cwrap('dtml_TemplateEvaluationContext_New', 'number', ['number', 'string'])
+    const templateEvaluationContextNew = m.cwrap('dtml_TemplateEvaluationContext_New', 'number', [
+        'number',
+        'string',
+        'string'
+    ])
     const templateEvaluatorEvaluate = m.cwrap(
         'dtml_TemplateEvaluator_Evaluate',
         'number',
@@ -27,12 +31,16 @@ const m = await createDTMLModule({
             m._dtml_TemplateCache_Clear(cachePtr)
         },
 
-        async evaluateTemplate(text, routeParams) {
+        async evaluateTemplate(text, routeParams, customProtocols) {
             let result = {}
 
             const templatePtr = templateNew(text)
             const evaluatorPtr = m._dtml_TemplateEvaluator_New(templatePtr)
-            const contextPtr = templateEvaluationContextNew(cachePtr, JSON.stringify(routeParams))
+            const contextPtr = templateEvaluationContextNew(
+                cachePtr,
+                JSON.stringify(routeParams),
+                JSON.stringify(customProtocols)
+            )
             const resultPtr = await templateEvaluatorEvaluate(evaluatorPtr, contextPtr)
 
             const isError = m._dtml_TemplateEvaluationResult_IsError(resultPtr)

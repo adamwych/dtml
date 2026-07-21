@@ -49,7 +49,7 @@ TemplateEvaluationResult *TemplateEvaluator::evaluate(TemplateEvaluationContext 
             continue;
         }
 
-        if (_c.eat("{")) {
+        if (_c.is("${")) {
             if (!evaluateTextExpression()) {
                 break;
             }
@@ -191,14 +191,15 @@ bool TemplateEvaluator::evaluateTextExpression() {
     auto parentElement = _ctx->elementStack.size() > 0 ? _ctx->elementStack.top() : nullptr;
     if (parentElement) {
         if (parentElement->name == "script" || parentElement->name == "style") {
-            _p.raw("{");
+            _p.raw("$");
+            _c.advance();
             return true;
         }
     }
 
     auto start = _c.pos();
 
-    auto depth = 1;
+    auto depth = 0;
     while (true) {
         if (!_c.advance()) {
             return error("Unexpected end-of-file while parsing text expression");
@@ -220,7 +221,7 @@ bool TemplateEvaluator::evaluateTextExpression() {
     auto text = String(_source.substr(start, end - start));
 
     auto interpreter = tel::Interpreter{createExpressionEvaluationContext()};
-    auto evaluatedValue = interpreter.evaluate(text);
+    auto evaluatedValue = interpreter.evaluateInterpolatedString(text);
     _p.raw(encodeHTML(printValueSafe(evaluatedValue)));
 
     return true;
@@ -230,13 +231,7 @@ bool TemplateEvaluator::evaluateElementAttributes(Map<StringView, String> *attri
     auto interpreter = tel::Interpreter{createExpressionEvaluationContext()};
 
     for (auto [name, textValue] : *attributes) {
-        auto isExpression = textValue.length() >= 2 && textValue.at(0) == '{' &&
-                            textValue.at(textValue.length() - 1) == '}';
-        if (!isExpression) {
-            continue;
-        }
-
-        auto evaluatedValue = interpreter.evaluate(textValue.substr(1, textValue.size() - 2));
+        auto evaluatedValue = interpreter.evaluateInterpolatedString(textValue);
 
         if (evaluatedValue->isArray() || evaluatedValue->isRecord()) {
             printf("Arrays and Records are not automatically serialized.\n");
@@ -251,7 +246,8 @@ bool TemplateEvaluator::evaluateElementAttributes(Map<StringView, String> *attri
 static Element *instantiateElement(const StringView &name) {
     if (name == "repeat") {
         return new RepeatElement();
-    } else if (name == "partial") {
+    }
+    if (name == "partial") {
         return new PartialElement();
     }
     return new Element();
@@ -465,7 +461,8 @@ bool TemplateEvaluator::error(const String &reason, TemplateLocation location) {
     return false;
 }
 
-FetchResponse *TemplateEvaluator::fetch(const String &url) {
+FetchResponse *TemplateEvaluator::fetch(const String &src) {
+    auto url = replaceCustomProtocol(src, _ctx->customProtocols);
     auto canBeCached = stringEndsWith(url, ".html") || stringEndsWith(url, ".json");
     if (!canBeCached || _ctx->cache->fetchCache.count(url) == 0) {
         uint8_t *responseData;
