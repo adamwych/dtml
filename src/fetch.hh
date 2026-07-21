@@ -6,6 +6,10 @@ namespace dtml {
 struct FetchResponse {
     int statusCode;
     String text;
+
+    inline bool isOk() const {
+        return statusCode >= 200 && statusCode <= 299;
+    }
 };
 } // namespace dtml
 

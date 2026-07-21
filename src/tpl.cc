@@ -349,6 +349,8 @@ bool TemplateEvaluator::evaluatePartial(PartialElement *element) {
         return true;
     }
 
+    // `into` makes the value available to runtime JavaScript by putting it
+    // into an existing JavaScript variable.
     if (element->attributes.count("into") != 0) {
         auto into = element->attributes["into"];
         _p.raw("<script>");
@@ -359,6 +361,7 @@ bool TemplateEvaluator::evaluatePartial(PartialElement *element) {
         return true;
     }
 
+    // `as` makes the value available to both runtime JavaScript and TEL expressions.
     if (element->attributes.count("as") != 0) {
         auto as = element->attributes["as"];
         _p.raw("<script>const ");
@@ -366,10 +369,7 @@ bool TemplateEvaluator::evaluatePartial(PartialElement *element) {
         _p.raw(" = ");
         _p.raw(templateResponse->text);
         _p.raw(";</script>");
-
-        auto value = tel::fromJson(templateResponse->text);
-        _ctx->exprContext.addGlobal(as, value);
-
+        _ctx->exprContext.addGlobal(as, tel::fromJson(templateResponse->text));
         return true;
     }
 
@@ -398,35 +398,44 @@ bool TemplateEvaluator::evaluatePartial(PartialElement *element) {
 }
 
 bool TemplateEvaluator::evaluateRepeatStart(RepeatElement *element) {
-    element->childrenStartPos = _c.pos();
-
+    String srcJson;
     if (element->attributes.count("of") > 0) {
-        auto srcJson = tel::fromJson(decodeHTML(element->attributes["of"]));
-        if (srcJson->isArray()) {
-            element->array = srcJson->asArray();
-        }
+        srcJson = decodeHTML(element->attributes["of"]);
     } else if (element->attributes.count("in") > 0) {
         auto srcResponse = fetch(element->attributes["in"]);
-        if (srcResponse && srcResponse->statusCode == 200) {
-            auto value = tel::fromJson(srcResponse->text);
-            if (value->isArray()) {
-                element->array = value->asArray();
-            } else if (value->isRecord()) {
-                auto record = value->asRecord();
-                if (record->properties.count("items") != 0) {
-                    element->array = record->properties["items"]->asArray();
-                }
+        if (srcResponse && srcResponse->isOk()) {
+            srcJson = srcResponse->text;
+        }
+    }
+
+    // Try to parse the response and extract relevant items array from the value.
+    auto src = tel::fromJson(srcJson);
+    if (src->isArray()) {
+        element->array = src->asArray();
+    } else if (src->isRecord()) {
+        // Fallback for when the server can't directly respond with an array.
+        // For example our API IDL requires all endpoints to return Records.
+        auto record = src->asRecord();
+        if (record->contains("items")) {
+            auto items = record->get("items");
+            if (items->isArray()) {
+                element->array = items->asArray();
             }
         }
     }
 
+    // Be nice and don't panic if the source did not turn out to be a valid array.
+    // @todo: We should probably log a warning in this case.
     if (!element->array) {
-        // A bit wasteful, but it makes the code cleaner.
         element->array = new tel::ArrayValue();
     }
 
+    element->childrenStartPos = _c.pos();
+
     _ctx->repeatStack.push(element);
 
+    // Even if there's no items, the parser still has to parse child elements to find the closing
+    // `</repeat>`. Disable printing to prevent the template from leaking.
     if (element->array->size() == 0) {
         _ctx->emptyRepeatDepth++;
         _p.disablePrinting();

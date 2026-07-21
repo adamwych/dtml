@@ -12,15 +12,14 @@ enum class ValueType {
     Boolean = 5,
 };
 
-class NullValue;
-class ArrayValue;
-class RecordValue;
-class StringValue;
-class NumberValue;
-class BooleanValue;
+struct NullValue;
+struct ArrayValue;
+struct RecordValue;
+struct StringValue;
+struct NumberValue;
+struct BooleanValue;
 
-class Value {
-  public:
+struct Value {
     virtual ~Value() = default;
 
     /// Gets human-readable representation of this value.
@@ -46,8 +45,7 @@ class Value {
     /* clang-format on */
 };
 
-class NullValue : public Value {
-  public:
+struct NullValue : public Value {
     virtual String print() const {
         return "null";
     }
@@ -56,8 +54,7 @@ class NullValue : public Value {
     }
 };
 
-class ArrayValue : public Value {
-  public:
+struct ArrayValue : public Value {
     Vector<Value *> elements;
 
     inline Value *at(int index) {
@@ -86,9 +83,16 @@ class ArrayValue : public Value {
     }
 };
 
-class RecordValue : public Value {
-  public:
+struct RecordValue : public Value {
     Map<String, Value *> properties;
+
+    bool contains(const String &key) {
+        return properties.count(key) != 0;
+    }
+
+    Value *get(const String &key) {
+        return properties[key];
+    }
 
     virtual String print() const {
         auto idx = 0;
@@ -110,8 +114,7 @@ class RecordValue : public Value {
     }
 };
 
-class StringValue : public Value {
-  public:
+struct StringValue : public Value {
     String value;
 
     explicit StringValue(const char *value) : value(value) {
@@ -133,8 +136,7 @@ class StringValue : public Value {
     }
 };
 
-class NumberValue : public Value {
-  public:
+struct NumberValue : public Value {
     double value;
 
     explicit NumberValue(double value) : value(value) {
@@ -148,8 +150,7 @@ class NumberValue : public Value {
     }
 };
 
-class BooleanValue : public Value {
-  public:
+struct BooleanValue : public Value {
     bool value;
 
     explicit BooleanValue(bool value) : value(value) {

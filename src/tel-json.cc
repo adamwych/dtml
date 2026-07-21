@@ -91,6 +91,10 @@ static Value *parseJsonValue(JsonParseContext *ctx) {
 }
 
 Value *fromJson(const String &json) {
+    if (json.empty()) {
+        return new NullValue();
+    }
+
     constexpr int tokenCount = 4096;
 
     jsmn_parser parser;
