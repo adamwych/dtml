@@ -6,5 +6,5 @@
 
 namespace tel {
 Value *fromJson(const String &json);
-String toJson(const Value *value);
+String toJson(const Value *value, bool quoteStrings = true);
 } // namespace tel

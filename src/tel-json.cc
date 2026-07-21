@@ -1,12 +1,11 @@
 #include "tel-json.hh"
-#include "utils-unicode.hh"
+#include "utils-enc-unicode.hh"
 
 #include <iomanip>
 #include <iostream>
 #include <string>
 
 #define JSMN_STATIC
-#define JSMN_STRICT
 #include "third-party/jsmn.h"
 
 namespace tel {
@@ -55,7 +54,7 @@ static Value *parseJsonObject(JsonParseContext *ctx) {
 static Value *parseJsonString(JsonParseContext *ctx) {
     auto token = ctx->tokens[ctx->pos - 1];
     auto tokenValue = String(ctx->json.substr(token.start, token.end - token.start));
-    return new StringValue(decodeJsonStringEscapes(tokenValue));
+    return new StringValue(dtml::decodeJsonStringEscapes(tokenValue));
 }
 
 static Value *parseJsonPrimitive(JsonParseContext *ctx) {
@@ -120,12 +119,15 @@ Value *fromJson(const String &json) {
     return value;
 }
 
-String toJson(const Value *value) {
+String toJson(const Value *value, bool quoteStrings) {
     switch (value->getType()) {
     case ValueType::Null:
         return "null";
 
     case ValueType::String: {
+        if (!quoteStrings) {
+            return value->asString()->value;
+        }
         auto out = String();
         out.append("\"");
         out.append(value->asString()->value);

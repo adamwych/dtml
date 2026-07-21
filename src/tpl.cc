@@ -1,5 +1,6 @@
 #include "tpl.hh"
 #include "tpl-printer.hh"
+#include "utils-enc-html.hh"
 #include "utils.hh"
 
 #include "tel.hh"
@@ -222,7 +223,7 @@ bool TemplateEvaluator::evaluateTextExpression() {
 
     auto interpreter = tel::Interpreter{createExpressionEvaluationContext()};
     auto evaluatedValue = interpreter.evaluateInterpolatedString(text);
-    _p.raw(encodeHTML(printValueSafe(evaluatedValue)));
+    _p.raw(encodeHTML(tel::toJson(evaluatedValue, /*quoteStrings*/ false)));
 
     return true;
 }
@@ -237,7 +238,7 @@ bool TemplateEvaluator::evaluateElementAttributes(Map<StringView, String> *attri
             printf("Arrays and Records are not automatically serialized.\n");
         }
 
-        (*attributes)[name] = encodeHTML(printValueSafe(evaluatedValue));
+        (*attributes)[name] = encodeHTML(tel::toJson(evaluatedValue, /*quoteStrings*/ false));
     }
 
     return true;
@@ -399,15 +400,22 @@ bool TemplateEvaluator::evaluatePartial(PartialElement *element) {
 bool TemplateEvaluator::evaluateRepeatStart(RepeatElement *element) {
     element->childrenStartPos = _c.pos();
 
-    auto srcResponse = fetch(element->attributes["in"]);
-    if (srcResponse && srcResponse->statusCode == 200) {
-        auto value = tel::fromJson(srcResponse->text);
-        if (value->isArray()) {
-            element->array = value->asArray();
-        } else if (value->isRecord()) {
-            auto record = value->asRecord();
-            if (record->properties.count("items") != 0) {
-                element->array = record->properties["items"]->asArray();
+    if (element->attributes.count("of") > 0) {
+        auto srcJson = tel::fromJson(decodeHTML(element->attributes["of"]));
+        if (srcJson->isArray()) {
+            element->array = srcJson->asArray();
+        }
+    } else if (element->attributes.count("in") > 0) {
+        auto srcResponse = fetch(element->attributes["in"]);
+        if (srcResponse && srcResponse->statusCode == 200) {
+            auto value = tel::fromJson(srcResponse->text);
+            if (value->isArray()) {
+                element->array = value->asArray();
+            } else if (value->isRecord()) {
+                auto record = value->asRecord();
+                if (record->properties.count("items") != 0) {
+                    element->array = record->properties["items"]->asArray();
+                }
             }
         }
     }

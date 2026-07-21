@@ -5,8 +5,9 @@
 
 #include <iterator>
 
-namespace tel {
-static int hexDigitValue(char c) {
+namespace dtml {
+namespace detail {
+int hexDigitValue(char c) {
     if (c >= '0' && c <= '9') {
         return c - '0';
     }
@@ -19,8 +20,7 @@ static int hexDigitValue(char c) {
     return -1;
 }
 
-static bool parseUnicodeEscape(const String &value, size_t escapeStart,
-                               utf8::utfchar32_t *codePoint) {
+bool parseUnicodeEscape(const String &value, size_t escapeStart, utf8::utfchar32_t *codePoint) {
     if (escapeStart > value.length() || value.length() - escapeStart < 6 ||
         value[escapeStart] != '\\' || value[escapeStart + 1] != 'u') {
         return false;
@@ -39,26 +39,26 @@ static bool parseUnicodeEscape(const String &value, size_t escapeStart,
     return true;
 }
 
-static void appendReplacementCodePoint(String *out) {
+void appendReplacementCodePoint(String *out) {
     out->append("\xEF\xBF\xBD");
 }
 
-static bool isLeadSurrogate(utf8::utfchar32_t codePoint) {
+bool isLeadSurrogate(utf8::utfchar32_t codePoint) {
     return codePoint >= 0xD800 && codePoint <= 0xDBFF;
 }
 
-static bool isTrailSurrogate(utf8::utfchar32_t codePoint) {
+bool isTrailSurrogate(utf8::utfchar32_t codePoint) {
     return codePoint >= 0xDC00 && codePoint <= 0xDFFF;
 }
 
-static bool isUnsafeControlCodePoint(utf8::utfchar32_t codePoint) {
+bool isUnsafeControlCodePoint(utf8::utfchar32_t codePoint) {
     if (codePoint == '\n' || codePoint == '\r' || codePoint == '\t') {
         return false;
     }
     return codePoint < 0x20 || (codePoint >= 0x7F && codePoint <= 0x9F);
 }
 
-static void appendUnicodeCodePoint(String *out, utf8::utfchar32_t codePoint) {
+void appendUnicodeCodePoint(String *out, utf8::utfchar32_t codePoint) {
     if (isUnsafeControlCodePoint(codePoint)) {
         appendReplacementCodePoint(out);
         return;
@@ -71,8 +71,8 @@ static void appendUnicodeCodePoint(String *out, utf8::utfchar32_t codePoint) {
     }
 }
 
-static void skipInvalidUtf8Sequence(String::const_iterator *it, String::const_iterator end,
-                                    utf8::internal::utf_error errCode) {
+void skipInvalidUtf8Sequence(String::const_iterator *it, String::const_iterator end,
+                             utf8::internal::utf_error errCode) {
     switch (errCode) {
     case utf8::internal::NOT_ENOUGH_ROOM:
         *it = end;
@@ -93,7 +93,7 @@ static void skipInvalidUtf8Sequence(String::const_iterator *it, String::const_it
     }
 }
 
-static String sanitizeUtf8Text(const String &value) {
+String sanitizeUtf8Text(const String &value) {
     String out;
     out.reserve(value.length());
 
@@ -114,8 +114,8 @@ static String sanitizeUtf8Text(const String &value) {
     return out;
 }
 
-static void decodeUnicodeEscape(const String &value, size_t escapeStart, String *out,
-                                size_t *escapeLength) {
+void decodeUnicodeEscape(const String &value, size_t escapeStart, String *out,
+                         size_t *escapeLength) {
     utf8::utfchar32_t codePoint = 0;
     if (!parseUnicodeEscape(value, escapeStart, &codePoint)) {
         appendReplacementCodePoint(out);
@@ -142,6 +142,7 @@ static void decodeUnicodeEscape(const String &value, size_t escapeStart, String 
 
     appendUnicodeCodePoint(out, codePoint);
 }
+} // namespace detail
 
 static String decodeJsonStringEscapes(const String &value) {
     String out;
@@ -184,7 +185,7 @@ static String decodeJsonStringEscapes(const String &value) {
             break;
         case 'u': {
             size_t escapeLength = 0;
-            decodeUnicodeEscape(value, idx, &out, &escapeLength);
+            detail::decodeUnicodeEscape(value, idx, &out, &escapeLength);
             idx += escapeLength;
             break;
         }
@@ -196,7 +197,6 @@ static String decodeJsonStringEscapes(const String &value) {
         }
     }
 
-    return sanitizeUtf8Text(out);
+    return detail::sanitizeUtf8Text(out);
 }
-
-} // namespace tel
+} // namespace dtml
