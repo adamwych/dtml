@@ -30,6 +30,10 @@ void TemplatePrinter::raw(const StringView &str) {
 void TemplatePrinter::printElementSignature(const StringView &name,
                                             const Map<StringView, String> &attributes,
                                             bool isSelfClosing) {
+    if (_disabledDepth > 0) {
+        return;
+    }
+
     raw('<');
     raw(name);
     printElementAttributes(attributes);
@@ -44,6 +48,10 @@ void TemplatePrinter::printElementSignature(const StringView &name,
 }
 
 void TemplatePrinter::printElementAttributes(const Map<StringView, String> &attributes) {
+    if (_disabledDepth > 0) {
+        return;
+    }
+
     for (auto [attributeName, attributeValue] : attributes) {
         raw(' ');
         raw(attributeName);
@@ -55,6 +63,10 @@ void TemplatePrinter::printElementAttributes(const Map<StringView, String> &attr
 }
 
 void TemplatePrinter::printElementClose(const StringView &name) {
+    if (_disabledDepth > 0) {
+        return;
+    }
+
     raw("</");
     raw(name);
     raw(">");

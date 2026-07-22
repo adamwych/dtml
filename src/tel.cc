@@ -14,6 +14,15 @@ Value *Interpreter::evaluate(const StringView &text) {
     return evaluate(parseResult.expression);
 }
 
+Vector<Value *> Interpreter::evaluate(const Vector<Expression *> exprs) {
+    auto evaluated = Vector<Value *>{};
+    evaluated.resize(exprs.size());
+    for (auto i = 0; i < exprs.size(); i++) {
+        evaluated[i] = evaluate(exprs[i]);
+    }
+    return evaluated;
+}
+
 Value *Interpreter::evaluateToken(const TokenExpression *expr) {
     auto token = expr->asToken()->token;
     switch (token.type) {
@@ -44,13 +53,16 @@ Value *Interpreter::evaluateMemberAccess(const MemberAccessExpression *expr) {
         return sourceProps[expr->member];
     }
 
-    printf("Cannot access member '%s'.\n", expr->member.c_str());
     return new NullValue();
 }
 
 Value *Interpreter::evaluateFunctionCall(const FunctionCallExpression *expr) {
-    auto source = expr->source ? evaluate(expr->source) : nullptr;
-    return builtin::call(&_ctx, expr, source);
+    return builtin::call(FunctionCall{
+        .ctx = &_ctx,
+        .name = expr->name,
+        .args = evaluate(expr->args),
+        .source = expr->source ? evaluate(expr->source) : nullptr,
+    });
 }
 
 Value *Interpreter::evaluate(const Expression *expr) {

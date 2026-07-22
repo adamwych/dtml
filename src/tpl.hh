@@ -26,6 +26,10 @@ struct RepeatElement : public Element {
     int childrenStartPos;
 };
 
+struct IfElement : public Element {
+    bool conditionIsTrue;
+};
+
 class Template {
     String _source;
 
@@ -50,7 +54,9 @@ struct TemplateEvaluationContext {
     Stack<Element *> elementStack;
     Stack<PartialElement *> partialStack;
     Stack<RepeatElement *> repeatStack;
+    Stack<IfElement *> ifStack;
     int emptyRepeatDepth = 0;
+    int falseIfDepth = 0;
 
     Map<String, String> customProtocols;
 
@@ -126,9 +132,12 @@ class TemplateEvaluator {
     bool evaluateRepeatStart(RepeatElement *element);
     bool evaluateRepeatEnd(RepeatElement *element);
 
-    bool evaluateIf(Element *element);
+    bool evaluateIfStart(IfElement *element);
+    bool evaluateIfEnd(IfElement *element);
 
     bool isInsideEmptyRepeat();
+    bool isInsideFalseIf();
+    bool isInsideSkippedBlock();
 
     bool error(const String &reason);
     bool error(const String &reason, TemplateLocation location);

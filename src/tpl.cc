@@ -10,6 +10,8 @@ TemplateEvaluationResult *TemplateEvaluator::evaluate(TemplateEvaluationContext 
     _error = nullptr;
     _ctx = ctx;
 
+    auto elementStackSizeAtStart = _ctx->elementStack.size();
+
     if (_c.eat("<!doctype html>")) {
         _p.raw("<!doctype html>");
     }
@@ -62,7 +64,11 @@ TemplateEvaluationResult *TemplateEvaluator::evaluate(TemplateEvaluationContext 
         return _error;
     }
 
-    if (!_ctx->elementStack.empty()) {
+    // Context and stacks are shared when evaluating nested `<partial />` elements,
+    // so we can't just check if `elementStack` is empty, but it should match the
+    // size it was before parsing.
+    auto elementStackSizeAtEnd = _ctx->elementStack.size();
+    if (elementStackSizeAtStart != elementStackSizeAtEnd) {
         auto element = _ctx->elementStack.top();
         error(format("element '%s' is not closed", element->name.c_str()));
         return _error;
@@ -221,7 +227,7 @@ bool TemplateEvaluator::evaluateTextExpression() {
     auto end = _c.pos();
     auto text = String(_source.substr(start, end - start));
 
-    if (!isInsideEmptyRepeat()) {
+    if (!isInsideSkippedBlock()) {
         auto interpreter = tel::Interpreter{createExpressionEvaluationContext()};
         auto evaluatedValue = interpreter.evaluateInterpolatedString(text);
         _p.raw(encodeHTML(tel::toJson(evaluatedValue, /*quoteStrings*/ false)));
@@ -253,6 +259,9 @@ static Element *instantiateElement(const StringView &name) {
     if (name == "partial") {
         return new PartialElement();
     }
+    if (name == "if") {
+        return new IfElement();
+    }
     return new Element();
 }
 
@@ -267,9 +276,9 @@ bool TemplateEvaluator::evaluateElementStart() {
         return false;
     }
 
-    auto insideEmptyRepeat = isInsideEmptyRepeat();
+    auto insideSkippedBlock = isInsideSkippedBlock();
 
-    if (!insideEmptyRepeat) {
+    if (!insideSkippedBlock) {
         evaluateElementAttributes(&*elementAttributes);
     }
 
@@ -287,7 +296,7 @@ bool TemplateEvaluator::evaluateElementStart() {
     }
 
     if (element->name == "partial") {
-        if (insideEmptyRepeat) {
+        if (insideSkippedBlock) {
             return true;
         }
 
@@ -302,7 +311,7 @@ bool TemplateEvaluator::evaluateElementStart() {
             return true;
         }
 
-        if (insideEmptyRepeat) {
+        if (insideSkippedBlock) {
             return true;
         }
 
@@ -317,11 +326,11 @@ bool TemplateEvaluator::evaluateElementStart() {
             return true;
         }
 
-        if (insideEmptyRepeat) {
+        if (insideSkippedBlock) {
             return true;
         }
 
-        return evaluateIf(element);
+        return evaluateIfStart(static_cast<IfElement *>(element));
     }
 
     _p.printElementSignature(element->name, element->attributes, isSelfClosing);
@@ -353,7 +362,14 @@ bool TemplateEvaluator::evaluateElementEnd() {
         }
     }
 
-    if (element->name != "repeat") {
+    if (!_ctx->ifStack.empty()) {
+        auto topIf = _ctx->ifStack.top();
+        if (topIf == element && evaluateIfEnd(topIf)) {
+            return true;
+        }
+    }
+
+    if (element->name != "repeat" && element->name != "if") {
         _p.printElementClose(*elementName);
     }
 
@@ -372,6 +388,10 @@ bool TemplateEvaluator::evaluatePartial(PartialElement *element) {
         if (srcResponse && srcResponse->isOk()) {
             srcJson = srcResponse->text;
         }
+    }
+
+    if (srcJson.empty()) {
+        return true;
     }
 
     // `into` makes the value available to runtime JavaScript by putting it
@@ -489,12 +509,48 @@ bool TemplateEvaluator::evaluateRepeatEnd(RepeatElement *element) {
     return false;
 }
 
-bool TemplateEvaluator::evaluateIf(Element *element) {
+bool TemplateEvaluator::evaluateIfStart(IfElement *element) {
+    if (element->attributes.count("_") == 0) {
+        return error("`if` element has no condition expression");
+    }
+
+    auto interpreter = tel::Interpreter{createExpressionEvaluationContext()};
+    auto condition = interpreter.evaluate(decodeHTML(element->attributes["_"]));
+
+    // We do not implicitly cast Arrays/Records/etc. into Booleans.
+    element->conditionIsTrue = condition->isBoolean() ? condition->asBoolean()->value : false;
+
+    if (!element->conditionIsTrue) {
+        _ctx->falseIfDepth++;
+        _p.disablePrinting();
+    }
+
+    _ctx->ifStack.push(element);
+
+    return true;
+}
+
+bool TemplateEvaluator::evaluateIfEnd(IfElement *element) {
+    if (!element->conditionIsTrue) {
+        _ctx->falseIfDepth--;
+        _p.enablePrinting();
+    }
+
+    _ctx->ifStack.pop();
+
     return false;
 }
 
 bool TemplateEvaluator::isInsideEmptyRepeat() {
     return _ctx->emptyRepeatDepth > 0;
+}
+
+bool TemplateEvaluator::isInsideFalseIf() {
+    return _ctx->falseIfDepth > 0;
+}
+
+bool TemplateEvaluator::isInsideSkippedBlock() {
+    return isInsideEmptyRepeat() || isInsideFalseIf();
 }
 
 bool TemplateEvaluator::error(const String &reason) {

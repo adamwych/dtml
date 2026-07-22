@@ -110,3 +110,17 @@ TEST_CASE("tpl: <partial /> element") {
              "/><div>${item.title}</div>",
              "<script>const item = { \"title\": \"bar\" };</script><div>bar</div>");
 }
+
+TEST_CASE("tpl: <if /> element") {
+    CHECK_OK("<if _=\"123.is(123)\">test</if>", "test");
+    CHECK_OK("<if _=\"123.is(0)\">test</if>", "");
+    CHECK_OK("<if _=\"123.not(123)\">test</if>", "");
+    CHECK_OK("<if _=\"123.not(0)\">test</if>", "test");
+    CHECK_OK("<if _=\"'str'.is('str')\">test</if>", "test");
+    CHECK_OK("<if _=\"variable.is('str')\">test</if>", "");
+    CHECK_OK("<if _=\"variable.is(abc)\">test</if>", "test");
+    CHECK_OK("<if _=\"123.is(0).or(123.not(0))\">test</if>", "test");
+    CHECK_OK("<if _=\"0.is(1)\"> <if _=\"0.is(0)\">nested</if> nested2 </if>", "");
+    CHECK_OK("<if _=\"0.is(0)\"> <if _=\"0.is(1)\">nested</if> nested2 </if>", "  nested2 ");
+    CHECK_OK("<if _=\"0.is(1)\"> <if _=\"0.is(0)\">nested</if> nested2 </if> other", " other");
+}

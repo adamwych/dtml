@@ -35,6 +35,16 @@ class Interpreter {
 
     Value *evaluate(const StringView &text);
     Value *evaluate(const Expression *expr);
+    Vector<Value *> evaluate(const Vector<Expression *> exprs);
     Value *evaluateInterpolatedString(const String &text);
+};
+
+struct FunctionCall {
+    const EvaluationContext *ctx;
+    const String &name;
+    const Vector<Value *> &args;
+
+    /// The value on which the function was called (e.g. in `foo.bar.baz()`, `bar` is the source)
+    const Value *source;
 };
 } // namespace tel
