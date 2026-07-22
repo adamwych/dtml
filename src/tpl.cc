@@ -34,17 +34,13 @@ TemplateEvaluationResult *TemplateEvaluator::evaluate(TemplateEvaluationContext 
             }
 
             auto isElementEnd = _c.eat("/");
-            if (isElementEnd) {
-                if (!evaluateElementEnd()) {
-                    break;
-                }
+            if (isElementEnd && !evaluateElementEnd()) {
+                break;
             }
 
             auto isElementStart = _c.isAsciiLetter() || _c.isElementTagSpecialCharacter();
-            if (isElementStart) {
-                if (!evaluateElementStart()) {
-                    break;
-                }
+            if (isElementStart && !evaluateElementStart()) {
+                break;
             }
 
             continue;
@@ -72,7 +68,7 @@ TemplateEvaluationResult *TemplateEvaluator::evaluate(TemplateEvaluationContext 
 bool TemplateEvaluator::readString(String *out) {
     auto start = _c.pos();
 
-    while (!_c.peek('"')) {
+    while (!_c.is('"')) {
         if (!_c.advance()) {
             return error("Unexpected end of file while parsing a string");
         }
@@ -80,7 +76,7 @@ bool TemplateEvaluator::readString(String *out) {
 
     auto end = _c.pos();
 
-    *out = _source.substr(start, end - start + 1);
+    *out = _source.substr(start, end - start);
     return true;
 }
 
@@ -146,8 +142,6 @@ Option<Map<StringView, String>> TemplateEvaluator::readElementAttributes() {
             if (!readString(&value)) {
                 return Nullopt;
             }
-
-            _c.advance(); // Skip over end `"`
 
             map[name] = value;
 
