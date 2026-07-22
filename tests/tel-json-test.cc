@@ -16,18 +16,18 @@ TEST_CASE("expr: fromJson parses a simple object") {
     REQUIRE(value->isRecord());
 
     auto record = value->asRecord();
-    REQUIRE(record->properties.at("name")->isString());
-    CHECK(record->properties.at("name")->asString()->value == "Ada");
+    REQUIRE(record->value.at("name")->isString());
+    CHECK(record->value.at("name")->asString()->value == "Ada");
 
-    REQUIRE(record->properties.at("age")->isNumber());
-    CHECK(std::fabs(record->properties.at("age")->asNumber()->value - 42.0) < 0.0001);
+    REQUIRE(record->value.at("age")->isNumber());
+    CHECK(std::fabs(record->value.at("age")->asNumber()->value - 42.0) < 0.0001);
 
-    REQUIRE(record->properties.at("active")->isBoolean());
-    CHECK(record->properties.at("active")->asBoolean()->value);
+    REQUIRE(record->value.at("active")->isBoolean());
+    CHECK(record->value.at("active")->asBoolean()->value);
 
-    CHECK(record->properties.at("meta")->isNull());
+    CHECK(record->value.at("meta")->isNull());
 
-    auto tags = record->properties.at("tags");
+    auto tags = record->value.at("tags");
     REQUIRE(tags->isArray());
     REQUIRE(tags->asArray()->size() == 2);
     CHECK(tags->asArray()->at(0)->asString()->value == "math");
@@ -45,17 +45,17 @@ TEST_CASE("expr: fromJson decodes unicode escapes") {
     REQUIRE(value->isRecord());
 
     auto record = value->asRecord();
-    REQUIRE(record->properties.at("accented")->isString());
-    CHECK(record->properties.at("accented")->asString()->value == "caf\xC3\xA9");
+    REQUIRE(record->value.at("accented")->isString());
+    CHECK(record->value.at("accented")->asString()->value == "caf\xC3\xA9");
 
-    REQUIRE(record->properties.at("emoji")->isString());
-    CHECK(record->properties.at("emoji")->asString()->value == "\xF0\x9F\x98\x80");
+    REQUIRE(record->value.at("emoji")->isString());
+    CHECK(record->value.at("emoji")->asString()->value == "\xF0\x9F\x98\x80");
 
-    REQUIRE(record->properties.at("escaped")->isString());
-    CHECK(record->properties.at("escaped")->asString()->value == "\\u00E9");
+    REQUIRE(record->value.at("escaped")->isString());
+    CHECK(record->value.at("escaped")->asString()->value == "\\u00E9");
 
-    REQUIRE(record->properties.at("newline")->isString());
-    CHECK(record->properties.at("newline")->asString()->value == "one\ntwo");
+    REQUIRE(record->value.at("newline")->isString());
+    CHECK(record->value.at("newline")->asString()->value == "one\ntwo");
 }
 
 TEST_CASE("expr: fromJson repairs unsafe unicode string content") {
@@ -72,20 +72,20 @@ TEST_CASE("expr: fromJson repairs unsafe unicode string content") {
     REQUIRE(value->isRecord());
 
     auto record = value->asRecord();
-    REQUIRE(record->properties.at("lead")->isString());
-    CHECK(record->properties.at("lead")->asString()->value == replacement);
+    REQUIRE(record->value.at("lead")->isString());
+    CHECK(record->value.at("lead")->asString()->value == replacement);
 
-    REQUIRE(record->properties.at("trail")->isString());
-    CHECK(record->properties.at("trail")->asString()->value == replacement);
+    REQUIRE(record->value.at("trail")->isString());
+    CHECK(record->value.at("trail")->asString()->value == replacement);
 
-    REQUIRE(record->properties.at("nul")->isString());
-    CHECK(record->properties.at("nul")->asString()->value == replacement);
+    REQUIRE(record->value.at("nul")->isString());
+    CHECK(record->value.at("nul")->asString()->value == replacement);
 
-    REQUIRE(record->properties.at("escape")->isString());
-    CHECK(record->properties.at("escape")->asString()->value == replacement);
+    REQUIRE(record->value.at("escape")->isString());
+    CHECK(record->value.at("escape")->asString()->value == replacement);
 
-    REQUIRE(record->properties.at("tab")->isString());
-    CHECK(record->properties.at("tab")->asString()->value == "\t");
+    REQUIRE(record->value.at("tab")->isString());
+    CHECK(record->value.at("tab")->asString()->value == "\t");
 }
 
 TEST_CASE("expr: fromJson repairs invalid raw utf8 inside strings") {
@@ -98,6 +98,6 @@ TEST_CASE("expr: fromJson repairs invalid raw utf8 inside strings") {
     REQUIRE(value->isRecord());
 
     auto record = value->asRecord();
-    REQUIRE(record->properties.at("bad")->isString());
-    CHECK(record->properties.at("bad")->asString()->value == "\xEF\xBF\xBD");
+    REQUIRE(record->value.at("bad")->isString());
+    CHECK(record->value.at("bad")->asString()->value == "\xEF\xBF\xBD");
 }

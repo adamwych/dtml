@@ -420,7 +420,7 @@ bool TemplateEvaluator::evaluatePartial(PartialElement *element) {
 
     element->attributesRecord = new tel::RecordValue();
     for (auto [name, value] : element->attributes) {
-        element->attributesRecord->properties[String(name)] = new tel::StringValue(value);
+        element->attributesRecord->value[String(name)] = new tel::StringValue(value);
     }
 
     auto tpl = new Template(srcJson.c_str());

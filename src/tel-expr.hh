@@ -11,12 +11,11 @@ enum class ExpressionType {
     FunctionCall = 3,
 };
 
-class TokenExpression;
-class MemberAccessExpression;
-class FunctionCallExpression;
+struct TokenExpression;
+struct MemberAccessExpression;
+struct FunctionCallExpression;
 
-class Expression {
-  public:
+struct Expression {
     virtual ~Expression() = default;
     virtual ExpressionType getType() const = 0;
 
@@ -31,8 +30,7 @@ class Expression {
     /* clang-format on */
 };
 
-class TokenExpression : public Expression {
-  public:
+struct TokenExpression : public Expression {
     ExpressionToken token;
 
     virtual ExpressionType getType() const {
@@ -40,8 +38,7 @@ class TokenExpression : public Expression {
     }
 };
 
-class MemberAccessExpression : public Expression {
-  public:
+struct MemberAccessExpression : public Expression {
     Expression *source;
     String member;
 
@@ -50,8 +47,7 @@ class MemberAccessExpression : public Expression {
     }
 };
 
-class FunctionCallExpression : public Expression {
-  public:
+struct FunctionCallExpression : public Expression {
     Expression *source = nullptr;
     String name;
     Vector<Expression *> args;

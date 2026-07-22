@@ -1,177 +1,111 @@
 #pragma once
 
 #include "common.hh"
+#include "tel-builtin-helper.hh"
 #include "tel.hh"
 #include "utils.hh"
 
 namespace tel {
 namespace builtin {
 
-/// [{a: 1, b: 2}, {a: 3, b: 4}, {a: 5, b: 6}].map('a') = [1, 3, 5]
-static Value *map(const FunctionCall &call) {
-    if (!call.source || !call.source->isArray()) {
-        printf("`.map()` can only be called on an array\n");
-        return new NullValue();
-    }
-
-    if (call.args.size() < 1 || !call.args[0]->isString()) {
-        printf("`.map()` argument #0 must be a string\n");
-        return new NullValue();
-    }
-
-    auto elements = call.source->asArray()->elements;
-    auto key = call.args[0]->asString()->value;
+BUILTIN(Array, map, {
+    REQUIRE_ARG(0, String)
 
     auto result = new ArrayValue();
-    result->elements.reserve(elements.size());
+    result->value.reserve(thisArray.size());
 
-    for (auto element : elements) {
+    for (auto element : thisArray) {
         if (!element || !element->isRecord()) {
-            result->elements.push_back(new NullValue());
+            result->value.push_back(new NullValue());
             continue;
         }
 
-        auto props = element->asRecord()->properties;
-        if (props.count(key) == 0) {
-            result->elements.push_back(new NullValue());
+        auto props = element->asRecord()->value;
+        if (props.count(arg0) == 0) {
+            result->value.push_back(new NullValue());
             continue;
         }
 
-        result->elements.push_back(props[key]);
+        result->value.push_back(props[arg0]);
     }
 
     return result;
-}
+})
 
-/// ['a', 'b', 'c'].join(', ') = 'a, b, c'
-static Value *join(const FunctionCall &call) {
-    if (!call.source || !call.source->isArray()) {
-        printf("`.join()` can only be called on an array\n");
-        return new NullValue();
-    }
-
-    if (call.args.size() < 1 || !call.args[0]->isString()) {
-        printf("`.join()` argument #0 must be a string\n");
-        return new NullValue();
-    }
-
-    auto elements = call.source->asArray()->elements;
-    auto separator = call.args[0]->asString()->value;
+BUILTIN(Array, join, {
+    REQUIRE_ARG(0, String)
 
     auto result = String();
-    for (auto i = 0; i < elements.size(); i++) {
-        result.append(printValueSafe(elements[i]));
-        if (i != elements.size() - 1) {
-            result.append(separator);
+    for (auto i = 0; i < thisArray.size(); i++) {
+        result.append(printValueSafe(thisArray[i]));
+        if (i != thisArray.size() - 1) {
+            result.append(arg0);
         }
     }
     return new StringValue(result);
-}
+})
 
-static Value *stringify(const FunctionCall &call) {
-    if (!call.source) {
-        printf("`.stringify()` can only called be on a value\n");
-        return new NullValue();
+/* clang-format off */
+BUILTIN_STANDALONE(stringify, {
+	return new StringValue(tel::toJson(thisValue));
+})
+
+BUILTIN(Number, round, {
+	return new StringValue(std::to_string(static_cast<int>(::round(thisNumber))));
+})
+/* clang-format on */
+
+BUILTIN_STANDALONE(contains, {
+    if (thisValue->isArray()) {
+        REQUIRE_THIS(Array)
+        REQUIRE_ARG_ANY(0)
+        return new BooleanValue(thisArrayValue->contains(arg0Value));
     }
 
-    return new StringValue(tel::toJson(call.source));
-}
-
-static Value *round(const FunctionCall &call) {
-    if (!call.source || !call.source->isNumber()) {
-        printf("`.round()` can only be called on a number\n");
-        return new NullValue();
-    }
-
-    return new StringValue(
-        std::to_string(static_cast<int>(::round(call.source->asNumber()->value))));
-}
-
-static Value *contains(const FunctionCall &call) {
-    if (call.source->isArray()) {
-        auto array = call.source->asArray();
-        auto key = call.args[0];
-        return new BooleanValue(array->contains(key));
-    }
-
-    if (call.source->isRecord()) {
-        if (!call.args[0]->isString()) {
-            printf("`.contains()` argument #0 must be a string\n");
-            return new NullValue();
-        }
-
-        auto record = call.source->asRecord();
-        auto key = call.args[0]->asString()->value;
-        return new BooleanValue(record->contains(key));
+    if (thisValue->isRecord()) {
+        REQUIRE_THIS(Record)
+        REQUIRE_ARG(0, String)
+        return new BooleanValue(thisRecordValue->contains(arg0));
     }
 
     printf("`.contains()` can only be called on an array or a record\n");
     return new NullValue();
-}
+})
 
-static Value *is(const FunctionCall &call) {
-    if (call.args.size() != 1) {
-        return new NullValue();
-    }
+BUILTIN_STANDALONE(is, {
+    REQUIRE_ARG_ANY(0)
+    return new BooleanValue(thisValue->equals(arg0Value));
+})
 
-    return new BooleanValue(call.source->equals(call.args[0]));
-}
+BUILTIN_STANDALONE(not, {
+    REQUIRE_ARG_ANY(0)
+    return new BooleanValue(!thisValue->equals(arg0Value));
+})
 
-static Value *isNot(const FunctionCall &call) {
-    if (call.args.size() != 1) {
-        return new NullValue();
-    }
+BUILTIN(Boolean, or, {
+    REQUIRE_ARG(0, Boolean)
+    return new BooleanValue(thisBoolean || arg0);
+})
 
-    return new BooleanValue(!call.source->equals(call.args[0]));
-}
-
-static Value *orr(const FunctionCall &call) {
-    if (!call.source->isBoolean()) {
-        printf("`.or()` can only be called on a boolean\n");
-        return new NullValue();
-    }
-
-    if (call.args.size() != 1 || !call.args[0]->isBoolean()) {
-        printf("`.or()` argument #0 must be a boolean\n");
-        return new NullValue();
-    }
-
-    return new BooleanValue(call.source->asBoolean()->value || call.args[0]->asBoolean()->value);
-}
-
-static Value *andd(const FunctionCall &call) {
-    if (!call.source->isBoolean()) {
-        printf("`.and()` can only be called on a boolean\n");
-        return new NullValue();
-    }
-
-    if (call.args.size() != 1 || !call.args[0]->isBoolean()) {
-        printf("`.and()` argument #0 must be a boolean\n");
-        return new NullValue();
-    }
-
-    return new BooleanValue(call.source->asBoolean()->value && call.args[0]->asBoolean()->value);
-}
+BUILTIN(Boolean, and, {
+    REQUIRE_ARG(0, Boolean)
+    return new BooleanValue(thisBoolean && arg0);
+})
 
 static Value *call(const FunctionCall &call) {
-#define TRY(func)                                                                                  \
-    if (call.name == #func)                                                                        \
-    return func(call)
-#define TRY_AS(func, alias)                                                                        \
+#define TRY(func, alias)                                                                           \
     if (call.name == alias)                                                                        \
     return func(call)
 
-    TRY(map);
-    TRY(join);
-    TRY(stringify);
-    TRY(round);
-    TRY(contains);
-    TRY(is);
-    TRY_AS(isNot, "not");
-    TRY_AS(orr, "or");
-    TRY_AS(andd, "and");
-
-#undef TRY
+    TRY(map_, "map");
+    TRY(join_, "join");
+    TRY(stringify_, "stringify");
+    TRY(round_, "round");
+    TRY(contains_, "contains");
+    TRY(is_, "is");
+    TRY(not_, "not");
+    TRY(or_, "or");
+    TRY(and_, "and");
 
     printf("%s\n", format("Call to undefined function '%s'", call.name.c_str()).c_str());
     return new NullValue();

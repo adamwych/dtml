@@ -28,7 +28,7 @@ static Value *parseJsonArray(JsonParseContext *ctx) {
 
     auto elementCount = ctx->tokens[ctx->pos - 1].size;
     for (auto elementIdx = 0; elementIdx < elementCount; elementIdx++) {
-        array->elements.push_back(parseJsonValue(ctx));
+        array->value.push_back(parseJsonValue(ctx));
     }
 
     return array;
@@ -45,7 +45,7 @@ static Value *parseJsonObject(JsonParseContext *ctx) {
         }
         auto propertyKey = propertyKeyValue->asString();
         auto propertyValue = parseJsonValue(ctx);
-        record->properties[propertyKey->value] = propertyValue;
+        record->value[propertyKey->value] = propertyValue;
     }
 
     return record;
@@ -150,7 +150,7 @@ String toJson(const Value *value, bool quoteStrings) {
         return value->asBoolean()->value ? "true" : "false";
 
     case ValueType::Array: {
-        auto elements = value->asArray()->elements;
+        auto elements = value->asArray()->value;
         auto out = String();
         out.append("[");
         for (auto elementIdx = 0; elementIdx < elements.size(); elementIdx++) {
@@ -165,7 +165,7 @@ String toJson(const Value *value, bool quoteStrings) {
     }
 
     case ValueType::Record: {
-        auto properties = value->asRecord()->properties;
+        auto properties = value->asRecord()->value;
         auto out = String();
         out.append("{");
         auto idx = 0;

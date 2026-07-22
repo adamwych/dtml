@@ -45,7 +45,7 @@ Value *Interpreter::evaluateToken(const TokenExpression *expr) {
 Value *Interpreter::evaluateMemberAccess(const MemberAccessExpression *expr) {
     auto source = evaluate(expr->source);
     if (source->isRecord()) {
-        auto sourceProps = source->asRecord()->properties;
+        auto sourceProps = source->asRecord()->value;
         if (sourceProps.count(expr->member) == 0) {
             return new NullValue();
         }

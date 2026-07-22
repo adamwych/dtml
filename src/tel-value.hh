@@ -60,15 +60,15 @@ struct NullValue : public Value {
 };
 
 struct ArrayValue : public Value {
-    Vector<Value *> elements;
+    Vector<Value *> value;
 
     explicit ArrayValue() {
     }
-    explicit ArrayValue(Vector<Value *> elements) : elements(elements) {
+    explicit ArrayValue(Vector<Value *> elements) : value(elements) {
     }
 
     bool contains(const Value *key) {
-        for (auto element : elements) {
+        for (auto element : value) {
             if (element->equals(key)) {
                 return true;
             }
@@ -77,11 +77,11 @@ struct ArrayValue : public Value {
     }
 
     inline Value *at(int index) {
-        return elements[index];
+        return value[index];
     }
 
     inline int size() {
-        return elements.size();
+        return value.size();
     }
 
     virtual bool equals(const Value *b) const {
@@ -90,10 +90,10 @@ struct ArrayValue : public Value {
     virtual String print() const {
         auto out = String();
         out.append("[");
-        for (auto elementIdx = 0; elementIdx < elements.size(); elementIdx++) {
-            auto element = elements[elementIdx];
+        for (auto elementIdx = 0; elementIdx < value.size(); elementIdx++) {
+            auto element = value[elementIdx];
             out.append(element->print());
-            if (elementIdx != elements.size() - 1) {
+            if (elementIdx != value.size() - 1) {
                 out.append(", ");
             }
         }
@@ -106,14 +106,14 @@ struct ArrayValue : public Value {
 };
 
 struct RecordValue : public Value {
-    Map<String, Value *> properties;
+    Map<String, Value *> value;
 
     bool contains(const String &key) {
-        return properties.count(key) != 0;
+        return value.count(key) != 0;
     }
 
     Value *get(const String &key) {
-        return properties[key];
+        return value[key];
     }
 
     virtual bool equals(const Value *b) const {
@@ -123,11 +123,11 @@ struct RecordValue : public Value {
         auto idx = 0;
         auto out = String();
         out.append("{");
-        for (auto [name, value] : properties) {
+        for (auto [name, value] : this->value) {
             out.append(name);
             out.append(" = ");
             out.append(value->print());
-            if (idx++ < properties.size() - 1) {
+            if (idx++ < this->value.size() - 1) {
                 out.append(", ");
             }
         }

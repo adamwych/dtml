@@ -15,6 +15,6 @@ TEST_CASE("benchmark parseJson", "[!benchmark]") {
 
     BENCHMARK("parse simple object") {
         std::unique_ptr<tel::Value> value(tel::fromJson(json));
-        return value->asRecord()->properties.at("tags")->asArray()->size();
+        return value->asRecord()->value.at("tags")->asArray()->size();
     };
 }

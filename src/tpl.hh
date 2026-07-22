@@ -72,7 +72,7 @@ struct TemplateEvaluationContext {
         exprContext.addGlobal("$route", tel::fromJson(routeParamsJSON));
 
 		auto customProtocolsRecord = tel::fromJson(customProtocolsJSON)->asRecord();
-		for (auto [protocol, replacement] : customProtocolsRecord->properties) {
+		for (auto [protocol, replacement] : customProtocolsRecord->value) {
 			customProtocols[protocol + "://"] = replacement->asString()->value;
 		}
     }
