@@ -130,6 +130,9 @@ ExpressionParseResult ExpressionParser::parse2() {
         if (left.expression->isToken() && left.expression->asToken()->token.isIdentifier() &&
             _c.eat('(')) {
             left = parseFunctionCall(nullptr, left.expression->asToken()->token.value);
+            if (!left.expression) {
+                return left;
+            }
             continue;
         }
 
@@ -141,6 +144,9 @@ ExpressionParseResult ExpressionParser::parse2() {
 
             if (_c.eat('(')) {
                 left = parseFunctionCall(left.expression, right.value);
+                if (!left.expression) {
+                    return left;
+                }
                 continue;
             }
 
