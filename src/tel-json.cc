@@ -68,7 +68,11 @@ static Value *parseJsonPrimitive(JsonParseContext *ctx) {
     } else if (tokenValue == "null") {
         return new NullValue();
     } else {
-        return new NumberValue(std::stof(String(tokenValue)));
+        try {
+            return new NumberValue(std::stof(String(tokenValue)));
+        } catch (std::exception) {
+            return new NullValue();
+        }
     }
 
     return new NullValue();

@@ -26,7 +26,7 @@ TemplateEvaluationResult *TemplateEvaluator::evaluate(TemplateEvaluationContext 
             if (isComment) {
                 while (!_c.eat("-->")) {
                     if (!_c.advance()) {
-                        error("unexpected end-of-file while parsing comment");
+                        error("unexpected end of file while parsing comment");
                         break;
                     }
                 }
@@ -62,6 +62,12 @@ TemplateEvaluationResult *TemplateEvaluator::evaluate(TemplateEvaluationContext 
         return _error;
     }
 
+    if (!_ctx->elementStack.empty()) {
+        auto element = _ctx->elementStack.top();
+        error(format("element '%s' is not closed", element->name.c_str()));
+        return _error;
+    }
+
     return new TemplateEvaluationResult(_p.getOutput());
 }
 
@@ -70,7 +76,7 @@ bool TemplateEvaluator::readString(String *out) {
 
     while (!_c.is('"')) {
         if (!_c.advance()) {
-            return error("Unexpected end of file while parsing a string");
+            return error("unexpected end of file while parsing a string");
         }
     }
 
@@ -89,12 +95,12 @@ Option<StringView> TemplateEvaluator::readElementName() {
         }
 
         if (!_c.advance()) {
-            error("Unexpected end of file while parsing element start tag");
+            error("unexpected end of file while parsing element tag name");
             return Nullopt;
         }
 
         if (!_c.isAsciiAlphanumeric() && !_c.isElementTagSpecialCharacter()) {
-            error("Unexpected character while parsing element start tag");
+            error("unexpected character while parsing element tag name");
             return Nullopt;
         }
     }
@@ -109,7 +115,7 @@ Option<Map<StringView, String>> TemplateEvaluator::readElementAttributes() {
     while (true) {
         // Skip whitespace between attributes e.g. `attrone="foo"     attrtwo="two"`
         if (!_c.eatWhitespace()) {
-            error("Unexpected end of file while parsing element attributes");
+            error("unexpected end of file while parsing element attributes");
             return Nullopt;
         }
 
@@ -117,7 +123,7 @@ Option<Map<StringView, String>> TemplateEvaluator::readElementAttributes() {
 
         while (true) {
             if (!_c.advance()) {
-                error("Unexpected end of file while parsing element attribute name");
+                error("unexpected end of file while parsing element attribute name");
                 return Nullopt;
             }
 
@@ -154,7 +160,7 @@ Option<Map<StringView, String>> TemplateEvaluator::readElementAttributes() {
             break;
         }
 
-        error("Unexpected character while parsing element attribute");
+        error("unexpected character while parsing element attribute");
         return Nullopt;
     }
 
@@ -197,7 +203,7 @@ bool TemplateEvaluator::evaluateTextExpression() {
     auto depth = 0;
     while (true) {
         if (!_c.advance()) {
-            return error("Unexpected end-of-file while parsing text expression");
+            return error("unexpected end of file while parsing text expression");
         }
 
         if (_c.is('{')) {
@@ -215,9 +221,11 @@ bool TemplateEvaluator::evaluateTextExpression() {
     auto end = _c.pos();
     auto text = String(_source.substr(start, end - start));
 
-    auto interpreter = tel::Interpreter{createExpressionEvaluationContext()};
-    auto evaluatedValue = interpreter.evaluateInterpolatedString(text);
-    _p.raw(encodeHTML(tel::toJson(evaluatedValue, /*quoteStrings*/ false)));
+    if (!isInsideEmptyRepeat()) {
+        auto interpreter = tel::Interpreter{createExpressionEvaluationContext()};
+        auto evaluatedValue = interpreter.evaluateInterpolatedString(text);
+        _p.raw(encodeHTML(tel::toJson(evaluatedValue, /*quoteStrings*/ false)));
+    }
 
     return true;
 }
@@ -284,7 +292,11 @@ bool TemplateEvaluator::evaluateElementStart() {
         }
 
         return evaluatePartial(static_cast<PartialElement *>(element));
-    } else if (element->name == "repeat") {
+    }
+
+    if (element->name == "repeat") {
+        // A self-closing `<repeat />` has no effect.
+        // @todo: Log a warning?
         if (isSelfClosing) {
             delete element;
             return true;
@@ -295,10 +307,24 @@ bool TemplateEvaluator::evaluateElementStart() {
         }
 
         return evaluateRepeatStart(static_cast<RepeatElement *>(element));
-    } else {
-        _p.printElementSignature(element->name, element->attributes, isSelfClosing);
     }
 
+    if (element->name == "if") {
+        // A self-closing `<if />` has no effect.
+        // @todo: Log a warning?
+        if (isSelfClosing) {
+            delete element;
+            return true;
+        }
+
+        if (insideEmptyRepeat) {
+            return true;
+        }
+
+        return evaluateIf(element);
+    }
+
+    _p.printElementSignature(element->name, element->attributes, isSelfClosing);
     return true;
 }
 
@@ -309,15 +335,15 @@ bool TemplateEvaluator::evaluateElementEnd() {
     }
 
     _c.advance();
-    _c.eat(">"); // Skip over '>'
+    _c.eat(">");
 
     if (_ctx->elementStack.empty()) {
-        return error("Unexpected element end tag");
+        return error("unexpected element end tag");
     }
 
     auto element = _ctx->elementStack.top();
     if (element->name != *elementName) {
-        return error("Mismatched element end tag");
+        return error("mismatched element end tag");
     }
 
     if (!_ctx->repeatStack.empty()) {
@@ -338,9 +364,14 @@ bool TemplateEvaluator::evaluateElementEnd() {
 }
 
 bool TemplateEvaluator::evaluatePartial(PartialElement *element) {
-    auto templateResponse = fetch(element->attributes["src"]);
-    if (!templateResponse || templateResponse->statusCode != 200) {
-        return true;
+    String srcJson;
+    if (element->attributes.count("of") != 0) {
+        srcJson = decodeHTML(element->attributes["of"]);
+    } else if (element->attributes.count("src") != 0) {
+        auto srcResponse = fetch(element->attributes["src"]);
+        if (srcResponse && srcResponse->isOk()) {
+            srcJson = srcResponse->text;
+        }
     }
 
     // `into` makes the value available to runtime JavaScript by putting it
@@ -350,7 +381,7 @@ bool TemplateEvaluator::evaluatePartial(PartialElement *element) {
         _p.raw("<script>");
         _p.raw(into);
         _p.raw(" = ");
-        _p.raw(templateResponse->text);
+        _p.raw(srcJson);
         _p.raw(";</script>");
         return true;
     }
@@ -361,9 +392,9 @@ bool TemplateEvaluator::evaluatePartial(PartialElement *element) {
         _p.raw("<script>const ");
         _p.raw(as);
         _p.raw(" = ");
-        _p.raw(templateResponse->text);
+        _p.raw(srcJson);
         _p.raw(";</script>");
-        _ctx->exprContext.addGlobal(as, tel::fromJson(templateResponse->text));
+        _ctx->exprContext.addGlobal(as, tel::fromJson(srcJson));
         return true;
     }
 
@@ -372,7 +403,7 @@ bool TemplateEvaluator::evaluatePartial(PartialElement *element) {
         element->attributesRecord->properties[String(name)] = new tel::StringValue(value);
     }
 
-    auto tpl = new Template(templateResponse->text.c_str());
+    auto tpl = new Template(srcJson.c_str());
     auto evaluator = new TemplateEvaluator(tpl);
 
     _ctx->partialStack.push(element);
@@ -455,6 +486,10 @@ bool TemplateEvaluator::evaluateRepeatEnd(RepeatElement *element) {
 
     _ctx->repeatStack.pop();
 
+    return false;
+}
+
+bool TemplateEvaluator::evaluateIf(Element *element) {
     return false;
 }
 

@@ -4,7 +4,7 @@
 #include <cmath>
 #include <memory>
 
-TEST_CASE("parseJson parses a simple object") {
+TEST_CASE("expr: fromJson parses a simple object") {
     std::unique_ptr<tel::Value> value(tel::fromJson(R"({
         "name": "Ada",
         "age": 42,
@@ -34,7 +34,7 @@ TEST_CASE("parseJson parses a simple object") {
     CHECK(tags->asArray()->at(1)->asString()->value == "logic");
 }
 
-TEST_CASE("parseJson decodes unicode escapes") {
+TEST_CASE("expr: fromJson decodes unicode escapes") {
     std::unique_ptr<tel::Value> value(tel::fromJson(R"({
         "accented": "caf\u00E9",
         "emoji": "\uD83D\uDE00",
@@ -58,7 +58,7 @@ TEST_CASE("parseJson decodes unicode escapes") {
     CHECK(record->properties.at("newline")->asString()->value == "one\ntwo");
 }
 
-TEST_CASE("parseJson repairs unsafe unicode string content") {
+TEST_CASE("expr: fromJson repairs unsafe unicode string content") {
     auto replacement = String("\xEF\xBF\xBD");
 
     std::unique_ptr<tel::Value> value(tel::fromJson(R"({
@@ -88,7 +88,7 @@ TEST_CASE("parseJson repairs unsafe unicode string content") {
     CHECK(record->properties.at("tab")->asString()->value == "\t");
 }
 
-TEST_CASE("parseJson repairs invalid raw utf8 inside strings") {
+TEST_CASE("expr: fromJson repairs invalid raw utf8 inside strings") {
     auto json = String(R"({"bad":")");
     json.push_back(static_cast<char>(0xFF));
     json.append(R"("})");

@@ -94,6 +94,14 @@ if(dtml_BUILD_TESTS AND NOT EMSCRIPTEN)
         CXX_EXTENSIONS OFF
     )
 
+    add_executable(tpl-test tests/tpl-test.cc)
+    target_link_libraries(tpl-test PRIVATE dtml Catch2::Catch2WithMain)
+    set_target_properties(tpl-test PROPERTIES
+        CXX_STANDARD 17
+        CXX_STANDARD_REQUIRED ON
+        CXX_EXTENSIONS OFF
+    )
+
     add_executable(utils-test tests/utils-test.cc)
     target_link_libraries(utils-test PRIVATE dtml Catch2::Catch2WithMain)
     set_target_properties(utils-test PROPERTIES
@@ -105,6 +113,7 @@ if(dtml_BUILD_TESTS AND NOT EMSCRIPTEN)
     list(APPEND CMAKE_MODULE_PATH ${catch2_SOURCE_DIR}/extras)
     include(Catch)
     catch_discover_tests(tel-json-test)
+    catch_discover_tests(tpl-test)
     catch_discover_tests(utils-test)
 endif()
 

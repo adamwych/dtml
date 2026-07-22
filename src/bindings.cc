@@ -59,7 +59,7 @@ EXPORT void dtml_TemplateEvaluationResult_Free(TemplateEvaluationResult *self) {
     delete self;
 }
 EXPORT const char *dtml_TemplateEvaluationResult_GetText(TemplateEvaluationResult *self) {
-    return self->getText();
+    return self->getText().c_str();
 }
 EXPORT bool dtml_TemplateEvaluationResult_IsError(TemplateEvaluationResult *self) {
     return self->isError();

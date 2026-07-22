@@ -30,6 +30,9 @@ class Template {
     String _source;
 
   public:
+    explicit Template(const String &source) {
+        _source = String(source);
+    }
     explicit Template(const char *source) {
         _source = String(source);
     }
@@ -87,8 +90,8 @@ class TemplateEvaluationResult {
         _text = errorMessage;
     }
 
-    inline const char *getText() const {
-        return _text.c_str();
+    inline const String &getText() const {
+        return _text;
     }
     inline bool isError() const {
         return _isError;
@@ -122,6 +125,8 @@ class TemplateEvaluator {
 
     bool evaluateRepeatStart(RepeatElement *element);
     bool evaluateRepeatEnd(RepeatElement *element);
+
+    bool evaluateIf(Element *element);
 
     bool isInsideEmptyRepeat();
 
