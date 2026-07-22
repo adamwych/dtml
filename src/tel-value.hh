@@ -22,7 +22,7 @@ struct BooleanValue;
 struct Value {
     virtual ~Value() = default;
 
-    virtual bool equals(Value *b) const = 0;
+    virtual bool equals(const Value *b) const = 0;
 
     /// Gets human-readable representation of this value.
     virtual String print() const = 0;
@@ -48,7 +48,7 @@ struct Value {
 };
 
 struct NullValue : public Value {
-    virtual bool equals(Value *b) const {
+    virtual bool equals(const Value *b) const {
         return b->isNull();
     }
     virtual String print() const {
@@ -67,6 +67,15 @@ struct ArrayValue : public Value {
     explicit ArrayValue(Vector<Value *> elements) : elements(elements) {
     }
 
+    bool contains(const Value *key) {
+        for (auto element : elements) {
+            if (element->equals(key)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     inline Value *at(int index) {
         return elements[index];
     }
@@ -75,7 +84,7 @@ struct ArrayValue : public Value {
         return elements.size();
     }
 
-    virtual bool equals(Value *b) const {
+    virtual bool equals(const Value *b) const {
         return false;
     }
     virtual String print() const {
@@ -107,7 +116,7 @@ struct RecordValue : public Value {
         return properties[key];
     }
 
-    virtual bool equals(Value *b) const {
+    virtual bool equals(const Value *b) const {
         return false;
     }
     virtual String print() const {
@@ -140,7 +149,7 @@ struct StringValue : public Value {
     explicit StringValue(StringView value) : value(value) {
     }
 
-    virtual bool equals(Value *b) const {
+    virtual bool equals(const Value *b) const {
         return b->isString() && b->asString()->value == value;
     }
     virtual String print() const {
@@ -161,7 +170,7 @@ struct NumberValue : public Value {
     explicit NumberValue(double value) : value(value) {
     }
 
-    virtual bool equals(Value *b) const {
+    virtual bool equals(const Value *b) const {
         return b->isNumber() && b->asNumber()->value == value;
     }
     virtual String print() const {
@@ -178,7 +187,7 @@ struct BooleanValue : public Value {
     explicit BooleanValue(bool value) : value(value) {
     }
 
-    virtual bool equals(Value *b) const {
+    virtual bool equals(const Value *b) const {
         return b->isBoolean() && b->asBoolean()->value == value;
     }
     virtual String print() const {

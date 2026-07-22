@@ -87,6 +87,28 @@ static Value *round(const FunctionCall &call) {
         std::to_string(static_cast<int>(::round(call.source->asNumber()->value))));
 }
 
+static Value *contains(const FunctionCall &call) {
+    if (call.source->isArray()) {
+        auto array = call.source->asArray();
+        auto key = call.args[0];
+        return new BooleanValue(array->contains(key));
+    }
+
+    if (call.source->isRecord()) {
+        if (!call.args[0]->isString()) {
+            printf("`.contains()` argument #0 must be a string\n");
+            return new NullValue();
+        }
+
+        auto record = call.source->asRecord();
+        auto key = call.args[0]->asString()->value;
+        return new BooleanValue(record->contains(key));
+    }
+
+    printf("`.contains()` can only be called on an array or a record\n");
+    return new NullValue();
+}
+
 static Value *is(const FunctionCall &call) {
     if (call.args.size() != 1) {
         return new NullValue();
@@ -117,6 +139,20 @@ static Value *orr(const FunctionCall &call) {
     return new BooleanValue(call.source->asBoolean()->value || call.args[0]->asBoolean()->value);
 }
 
+static Value *andd(const FunctionCall &call) {
+    if (!call.source->isBoolean()) {
+        printf("`.and()` can only be called on a boolean\n");
+        return new NullValue();
+    }
+
+    if (call.args.size() != 1 || !call.args[0]->isBoolean()) {
+        printf("`.and()` argument #0 must be a boolean\n");
+        return new NullValue();
+    }
+
+    return new BooleanValue(call.source->asBoolean()->value && call.args[0]->asBoolean()->value);
+}
+
 static Value *call(const FunctionCall &call) {
 #define TRY(func)                                                                                  \
     if (call.name == #func)                                                                        \
@@ -129,9 +165,11 @@ static Value *call(const FunctionCall &call) {
     TRY(join);
     TRY(stringify);
     TRY(round);
+    TRY(contains);
     TRY(is);
     TRY_AS(isNot, "not");
     TRY_AS(orr, "or");
+    TRY_AS(andd, "and");
 
 #undef TRY
 
