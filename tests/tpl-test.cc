@@ -51,6 +51,8 @@ TEST_CASE("tpl: parse elements") {
              "</end-new-line\n"
              ">",
              "<end-new-line></end-new-line>");
+    CHECK_OK("<single-quote attr='foo'></single-quote>",
+             "<single-quote attr=\"foo\"></single-quote>");
 
     CHECK_FAIL("<foo>Bar", "element 'foo' is not closed");
     CHECK_FAIL("<foo attr=1223></foo>", "element attribute value must be quoted");

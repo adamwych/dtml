@@ -78,9 +78,20 @@ TemplateEvaluationResult *TemplateEvaluator::evaluate(TemplateEvaluationContext 
 }
 
 bool TemplateEvaluator::readString(String *out) {
+    // Use current character to determine whether the string uses `"` or `'`.
+    auto quote = _c.current();
+
+    if (quote != '"' && quote != '\'') {
+        return error("string must use either single or double quote");
+    }
+
+    if (!_c.advance()) {
+        return error("unexpected end of file while parsing a string");
+    }
+
     auto start = _c.pos();
 
-    while (!_c.is('"')) {
+    while (!_c.is(quote)) {
         if (!_c.advance()) {
             return error("unexpected end of file while parsing a string");
         }
@@ -156,7 +167,7 @@ Option<Map<StringView, String>> TemplateEvaluator::readElementAttributes() {
         }
 
         if (_c.eat("=")) {
-            if (!_c.eat("\"")) {
+            if (!_c.is("\"") && !_c.is("'")) {
                 error("element attribute value must be quoted");
                 return Nullopt;
             }
