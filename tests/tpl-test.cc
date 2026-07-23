@@ -20,7 +20,7 @@ void CHECK_OK(const String &tpl, const String &expectedOutput) {
 
 void CHECK_FAIL(const String &tpl, const String &expectedError) {
     auto result = evaluateTemplate(tpl);
-    REQUIRE(result->isError());
+    CHECK(result->isError());
     CHECK(result->getText() == expectedError);
 }
 
@@ -45,9 +45,11 @@ TEST_CASE("tpl: parse elements") {
              ">"
              "</foo>",
              "<foo one=\"one\" two=\"line1line2\"></foo>");
+    CHECK_OK("<textarea readonly class=\"test\"></textarea>",
+             "<textarea class=\"test\" readonly=\"true\"></textarea>");
 
     CHECK_FAIL("<foo>Bar", "element 'foo' is not closed");
-    CHECK_FAIL("<foo attr=1223></foo>", "unexpected character while parsing element attribute");
+    CHECK_FAIL("<foo attr=1223></foo>", "element attribute value must be quoted");
     CHECK_FAIL("<123></123>", "unexpected element end tag");
     CHECK_FAIL("<!--", "unexpected end of file while parsing comment");
     CHECK_FAIL("<element", "unexpected end of file while parsing element tag name");

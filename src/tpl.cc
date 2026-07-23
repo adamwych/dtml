@@ -120,12 +120,18 @@ Option<Map<StringView, String>> TemplateEvaluator::readElementAttributes() {
 
     while (true) {
         // Skip whitespace between attributes e.g. `attrone="foo"     attrtwo="two"`
-        if (!_c.eatWhitespace()) {
-            error("unexpected end of file while parsing element attributes");
-            return Nullopt;
+        while (_c.isWhitespace()) {
+            if (!_c.advance()) {
+                error("unexpected end of file while parsing element attribute name");
+                return Nullopt;
+            }
         }
 
-        auto nameStart = _c.pos() + 1;
+        if (_c.is(">") || _c.is("/>")) {
+            break;
+        }
+
+        auto nameStart = _c.pos();
 
         while (true) {
             if (!_c.advance()) {
@@ -133,13 +139,7 @@ Option<Map<StringView, String>> TemplateEvaluator::readElementAttributes() {
                 return Nullopt;
             }
 
-            if (_c.is(' ')) {
-                _c.eatWhitespace();
-                _c.advance();
-                break;
-            }
-
-            if (_c.is('=') || _c.is('/') || _c.is('>')) {
+            if (!_c.isAsciiAlphanumeric() && !_c.is('-') && !_c.is('_')) {
                 break;
             }
         }
@@ -147,27 +147,38 @@ Option<Map<StringView, String>> TemplateEvaluator::readElementAttributes() {
         auto nameEnd = _c.pos();
         auto name = _source.substr(nameStart, nameEnd - nameStart);
 
-        if (_c.is("=\"")) {
-            _c.advance(2); // Skip over start `="`
+        // Skip whitespace between attributes e.g. `attrone="foo"     attrtwo="two"`
+        while (_c.isWhitespace()) {
+            if (!_c.advance()) {
+                error("unexpected end of file while parsing element attribute name");
+                return Nullopt;
+            }
+        }
+
+        if (_c.eat("=")) {
+            if (!_c.eat("\"")) {
+                error("element attribute value must be quoted");
+                return Nullopt;
+            }
 
             String value;
             if (!readString(&value)) {
                 return Nullopt;
             }
+            _c.advance(); // Eat closing `"`
 
             map[name] = value;
-
-            continue;
-        } else if (_c.is('/') || _c.is('>')) {
+        } else if (_c.is(">") || _c.is("/>")) {
             if (name.length() > 0) {
                 map[name] = "true";
             }
 
             break;
+        } else {
+            if (name.length() > 0) {
+                map[name] = "true";
+            }
         }
-
-        error("unexpected character while parsing element attribute");
-        return Nullopt;
     }
 
     return map;
@@ -270,6 +281,8 @@ bool TemplateEvaluator::evaluateElementStart() {
     if (!elementName) {
         return false;
     }
+
+    _c.advance();
 
     auto elementAttributes = readElementAttributes();
     if (!elementAttributes) {
