@@ -3,8 +3,12 @@
 #include <cstdlib>
 #include <cstring>
 #include <map>
+#include <optional>
 #include <stack>
 #include <stdio.h>
+#include <string>
+#include <string_view>
+#include <utility>
 #include <vector>
 
 template <typename K, typename V> using Map = std::map<K, V>;

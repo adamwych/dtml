@@ -20,198 +20,225 @@ struct NumberValue;
 struct BooleanValue;
 
 struct Value {
+    const ValueType type;
+
+  protected:
+    explicit Value(ValueType type) : type(type) {}
+
+  public:
     virtual ~Value() = default;
 
-    virtual bool equals(const Value *b) const = 0;
-
-    /// Gets human-readable representation of this value.
-    virtual String print() const = 0;
-
-    /// Gets the type disciminator of this value.
-    virtual ValueType getType() const = 0;
+    Value(const Value &) = delete;
+    Value &operator=(const Value &) = delete;
+    Value(Value &&) = delete;
+    Value &operator=(Value &&) = delete;
 
     /* clang-format off */
-    inline bool isNull()      const { return getType() == ValueType::Null; }
-    inline bool isArray()     const { return getType() == ValueType::Array; }
-    inline bool isRecord()    const { return getType() == ValueType::Record; }
-    inline bool isString()    const { return getType() == ValueType::String; }
-    inline bool isNumber()    const { return getType() == ValueType::Number; }
-    inline bool isBoolean()   const { return getType() == ValueType::Boolean; }
+    inline bool isNull()    const { return type == ValueType::Null; }
+    inline bool isArray()   const { return type == ValueType::Array; }
+    inline bool isRecord()  const { return type == ValueType::Record; }
+    inline bool isString()  const { return type == ValueType::String; }
+    inline bool isNumber()  const { return type == ValueType::Number; }
+    inline bool isBoolean() const { return type == ValueType::Boolean; }
 
-    NullValue *asNull()       const { return (NullValue *)this; }
-    ArrayValue *asArray()     const { return (ArrayValue *)this; }
-    RecordValue *asRecord()   const { return (RecordValue *)this; }
-    StringValue *asString()   const { return (StringValue *)this; }
-    NumberValue *asNumber()   const { return (NumberValue *)this; }
-    BooleanValue *asBoolean() const { return (BooleanValue *)this; }
+    NullValue *asNull()       { return (NullValue *)this; }
+    ArrayValue *asArray()     { return (ArrayValue *)this; }
+    RecordValue *asRecord()   { return (RecordValue *)this; }
+    StringValue *asString()   { return (StringValue *)this; }
+    NumberValue *asNumber()   { return (NumberValue *)this; }
+    BooleanValue *asBoolean() { return (BooleanValue *)this; }
+
+    const NullValue *asNull()       const { return (const NullValue *)this; }
+    const ArrayValue *asArray()     const { return (const ArrayValue *)this; }
+    const RecordValue *asRecord()   const { return (const RecordValue *)this; }
+    const StringValue *asString()   const { return (const StringValue *)this; }
+    const NumberValue *asNumber()   const { return (const NumberValue *)this; }
+    const BooleanValue *asBoolean() const { return (const BooleanValue *)this; }
     /* clang-format on */
 };
 
+/// Represents lack of a value.
 struct NullValue : public Value {
-    virtual bool equals(const Value *b) const {
-        return b->isNull();
-    }
-    virtual String print() const {
-        return "null";
-    }
-    virtual ValueType getType() const {
-        return ValueType::Null;
-    }
+    explicit NullValue() : Value(ValueType::Null) {}
 };
 
+/// Represents an untyped list of values.
 struct ArrayValue : public Value {
     Vector<Value *> value;
 
-    explicit ArrayValue() {
-    }
-    explicit ArrayValue(Vector<Value *> elements) : value(elements) {
+    explicit ArrayValue(Vector<Value *> value = {})
+        : Value(ValueType::Array),
+          value(std::move(value)) {}
+
+    bool contains(const Value *key) const;
+
+    Value *at(int index) {
+        return value.at(index);
     }
 
-    bool contains(const Value *key) {
-        for (auto element : value) {
-            if (element->equals(key)) {
-                return true;
-            }
-        }
-        return false;
+    const Value *at(int index) const {
+        return value.at(index);
     }
 
-    inline Value *at(int index) {
-        return value[index];
-    }
-
-    inline int size() {
+    int size() const {
         return value.size();
-    }
-
-    virtual bool equals(const Value *b) const {
-        return false;
-    }
-    virtual String print() const {
-        auto out = String();
-        out.append("[");
-        for (auto elementIdx = 0; elementIdx < value.size(); elementIdx++) {
-            auto element = value[elementIdx];
-            out.append(element->print());
-            if (elementIdx != value.size() - 1) {
-                out.append(", ");
-            }
-        }
-        out.append("]");
-        return out;
-    }
-    virtual ValueType getType() const {
-        return ValueType::Array;
     }
 };
 
+/// Represents a collection of key-value pairs sorted by key.
 struct RecordValue : public Value {
     Map<String, Value *> value;
 
-    bool contains(const String &key) {
+    explicit RecordValue(Map<String, Value *> value = {})
+        : Value(ValueType::Record),
+          value(std::move(value)) {}
+
+    bool contains(const String &key) const {
         return value.count(key) != 0;
     }
 
     Value *get(const String &key) {
-        return value[key];
+        return value.at(key);
     }
 
-    virtual bool equals(const Value *b) const {
-        return false;
-    }
-    virtual String print() const {
-        auto idx = 0;
-        auto out = String();
-        out.append("{");
-        for (auto [name, value] : this->value) {
-            out.append(name);
-            out.append(" = ");
-            out.append(value->print());
-            if (idx++ < this->value.size() - 1) {
-                out.append(", ");
-            }
-        }
-        out.append("}");
-        return out;
-    }
-    virtual ValueType getType() const {
-        return ValueType::Record;
+    const Value *get(const String &key) const {
+        return value.at(key);
     }
 };
 
+/// Represents a text value.
 struct StringValue : public Value {
     String value;
 
-    explicit StringValue(const char *value) : value(value) {
-    }
-    explicit StringValue(String value) : value(value) {
-    }
-    explicit StringValue(StringView value) : value(value) {
-    }
-
-    virtual bool equals(const Value *b) const {
-        return b->isString() && b->asString()->value == value;
-    }
-    virtual String print() const {
-        auto out = String();
-        out.append("\"");
-        out.append(value);
-        out.append("\"");
-        return out;
-    }
-    virtual ValueType getType() const {
-        return ValueType::String;
-    }
+    explicit StringValue(const char *value) : Value(ValueType::String), value(value) {}
+    explicit StringValue(StringView value) : Value(ValueType::String), value(value) {}
+    explicit StringValue(String value = {}) : Value(ValueType::String), value(std::move(value)) {}
 };
 
+/// Represents a 64-bit floating-point decimal.
 struct NumberValue : public Value {
     double value;
 
-    explicit NumberValue(double value) : value(value) {
-    }
-
-    virtual bool equals(const Value *b) const {
-        return b->isNumber() && b->asNumber()->value == value;
-    }
-    virtual String print() const {
-        return std::to_string(value);
-    }
-    virtual ValueType getType() const {
-        return ValueType::Number;
-    }
+    explicit NumberValue(double value = {}) : Value(ValueType::Number), value(value) {}
 };
 
+/// Represents a boolean `true`/`false` state.
 struct BooleanValue : public Value {
     bool value;
 
-    explicit BooleanValue(bool value) : value(value) {
-    }
+    explicit BooleanValue(bool value = {}) : Value(ValueType::Boolean), value(value) {}
+};
 
-    virtual bool equals(const Value *b) const {
-        return b->isBoolean() && b->asBoolean()->value == value;
-    }
-    virtual String print() const {
-        return value ? "true" : "false";
-    }
-    virtual ValueType getType() const {
-        return ValueType::Boolean;
+struct ValueComparator {
+    bool equals(const Value *a, const Value *b) const {
+        switch (a->type) {
+        case ValueType::Null:
+            return b->isNull();
+
+        case ValueType::Array:
+        case ValueType::Record:
+            return false;
+
+        case ValueType::String:
+            return b->isString() && a->asString()->value == b->asString()->value;
+        case ValueType::Number:
+            return b->isNumber() && a->asNumber()->value == b->asNumber()->value;
+        case ValueType::Boolean:
+            return b->isBoolean() && a->asBoolean()->value == b->asBoolean()->value;
+
+        default:
+            return false;
+        }
     }
 };
 
-/// Gets human-readable representation of a `tel::Value`s.
-/// Returns an empty string for containers (arrays and records).
-static String printValueSafe(Value *value) {
-    switch (value->getType()) {
-    case ValueType::Null:
-        return "null";
-    case ValueType::String:
-        return value->asString()->value;
-    case ValueType::Number:
-        return std::to_string(value->asNumber()->value);
-    case ValueType::Boolean:
-        return value->asBoolean()->value ? "true" : "false";
-    default:
-        return String();
+struct ValuePrinter {
+    /// If set, Arrays and Records will not be printed.
+    bool skipContainers = false;
+    /// If set, String values will be wrapped in quotes (`"string"` vs `string`).
+    bool quoteStrings = true;
+
+    void print(const Value *value, String &out) const {
+        switch (value->type) {
+        case ValueType::Null:
+            out.append("null");
+            break;
+
+        case ValueType::Array: {
+            if (skipContainers) {
+                break;
+            }
+
+            const auto &elements = value->asArray()->value;
+            auto idx = 0;
+
+            out.append("[");
+            for (const auto &element : elements) {
+                if (idx++ > 0) {
+                    out.append(", ");
+                }
+                print(element, out);
+            }
+            out.append("]");
+
+            break;
+        }
+
+        case ValueType::Record: {
+            if (skipContainers) {
+                break;
+            }
+
+            const auto &properties = value->asRecord()->value;
+            auto idx = 0;
+
+            out.append("{");
+            for (const auto &[name, value] : properties) {
+                if (idx++ > 0) {
+                    out.append(", ");
+                }
+                out.append(name);
+                out.append(" = ");
+                print(value, out);
+            }
+            out.append("}");
+            break;
+        }
+
+        case ValueType::String:
+            if (quoteStrings) {
+                out.append("\"");
+                out.append(value->asString()->value);
+                out.append("\"");
+            } else {
+                out.append(value->asString()->value);
+            }
+            break;
+
+        case ValueType::Number:
+            out.append(std::to_string(value->asNumber()->value));
+            break;
+
+        case ValueType::Boolean:
+            out.append(value->asBoolean()->value ? "true" : "false");
+            break;
+        }
     }
+
+    String print(const Value *value) const {
+        String out;
+        print(value, out);
+        return out;
+    }
+};
+
+inline bool ArrayValue::contains(const Value *key) const {
+    ValueComparator comparator;
+    for (auto element : value) {
+        if (comparator.equals(element, key)) {
+            return true;
+        }
+    }
+    return false;
 }
 } // namespace tel

@@ -55,7 +55,7 @@ static Value *parseJsonObject(JsonParseContext *ctx) {
 static Value *parseJsonString(JsonParseContext *ctx) {
     auto token = ctx->tokens[ctx->pos - 1];
     auto tokenValue = String(ctx->json.substr(token.start, token.end - token.start));
-    return new StringValue(dtml::decodeJsonStringEscapes(tokenValue));
+    return new StringValue(std::move(dtml::decodeJsonStringEscapes(tokenValue)));
 }
 
 static Value *parseJsonPrimitive(JsonParseContext *ctx) {
@@ -129,7 +129,7 @@ Value *fromJson(const String &json) {
 }
 
 String toJson(const Value *value, bool quoteStrings) {
-    switch (value->getType()) {
+    switch (value->type) {
     case ValueType::Null:
         return "null";
 

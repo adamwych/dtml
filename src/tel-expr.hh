@@ -16,35 +16,45 @@ struct MemberAccessExpression;
 struct FunctionCallExpression;
 
 struct Expression {
+    const ExpressionType type;
+
+  protected:
+    explicit Expression(ExpressionType type) : type(type) {}
+
+  public:
     virtual ~Expression() = default;
-    virtual ExpressionType getType() const = 0;
+
+    Expression(const Expression &) = delete;
+    Expression &operator=(const Expression &) = delete;
+    Expression(Expression &&) = delete;
+    Expression &operator=(Expression &&) = delete;
 
     /* clang-format off */
-    inline bool isToken() const         { return getType() == ExpressionType::Token; }
-    inline bool isMemberAccess() const  { return getType() == ExpressionType::MemberAccess; }
-    inline bool isFunctionCall() const  { return getType() == ExpressionType::FunctionCall; }
+    inline bool isToken()        const { return type == ExpressionType::Token; }
+    inline bool isMemberAccess() const { return type == ExpressionType::MemberAccess; }
+    inline bool isFunctionCall() const { return type == ExpressionType::FunctionCall; }
 
-	TokenExpression *asToken() const               { return (TokenExpression *)this; }
-	MemberAccessExpression *asMemberAccess() const { return (MemberAccessExpression *)this; }
-    FunctionCallExpression *asFunctionCall() const { return (FunctionCallExpression *)this; }
+	TokenExpression *asToken()               { return (TokenExpression *)this; }
+	MemberAccessExpression *asMemberAccess() { return (MemberAccessExpression *)this; }
+    FunctionCallExpression *asFunctionCall() { return (FunctionCallExpression *)this; }
+
+	const TokenExpression *asToken()               const { return (const TokenExpression *)this; }
+	const MemberAccessExpression *asMemberAccess() const { return (const MemberAccessExpression *)this; }
+    const FunctionCallExpression *asFunctionCall() const { return (const FunctionCallExpression *)this; }
     /* clang-format on */
 };
 
 struct TokenExpression : public Expression {
     ExpressionToken token;
 
-    virtual ExpressionType getType() const {
-        return ExpressionType::Token;
-    }
+    explicit TokenExpression() : Expression(ExpressionType::Token) {}
 };
 
 struct MemberAccessExpression : public Expression {
     Expression *source;
     String member;
 
-    virtual ExpressionType getType() const {
-        return ExpressionType::MemberAccess;
-    }
+    explicit MemberAccessExpression() : Expression(ExpressionType::MemberAccess) {}
 };
 
 struct FunctionCallExpression : public Expression {
@@ -52,8 +62,6 @@ struct FunctionCallExpression : public Expression {
     String name;
     Vector<Expression *> args;
 
-    virtual ExpressionType getType() const {
-        return ExpressionType::FunctionCall;
-    }
+    explicit FunctionCallExpression() : Expression(ExpressionType::FunctionCall) {}
 };
 } // namespace tel

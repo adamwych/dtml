@@ -35,23 +35,27 @@ BUILTIN(Array, map, {
 BUILTIN(Array, join, {
     REQUIRE_ARG(0, String)
 
+    ValuePrinter printer;
+    printer.skipContainers = true;
+    printer.quoteStrings = false;
+
     auto result = String();
     for (auto i = 0; i < thisArray.size(); i++) {
-        result.append(printValueSafe(thisArray[i]));
-        if (i != thisArray.size() - 1) {
+        if (i > 0) {
             result.append(arg0);
         }
+        printer.print(thisArray[i], result);
     }
-    return new StringValue(result);
+    return new StringValue(std::move(result));
 })
 
 /* clang-format off */
 BUILTIN_STANDALONE(stringify, {
-	return new StringValue(tel::toJson(thisValue));
+	return new StringValue(std::move(tel::toJson(thisValue)));
 })
 
 BUILTIN(Number, round, {
-	return new StringValue(std::to_string(static_cast<int>(::round(thisNumber))));
+	return new StringValue(std::move(std::to_string(static_cast<int>(::round(thisNumber)))));
 })
 
 BUILTIN(Array, length, {
@@ -78,12 +82,12 @@ BUILTIN_STANDALONE(contains, {
 
 BUILTIN_STANDALONE(is, {
     REQUIRE_ARG_ANY(0)
-    return new BooleanValue(thisValue->equals(arg0Value));
+    return new BooleanValue(ValueComparator{}.equals(thisValue, arg0Value));
 })
 
 BUILTIN_STANDALONE(not, {
     REQUIRE_ARG_ANY(0)
-    return new BooleanValue(!thisValue->equals(arg0Value));
+    return new BooleanValue(!ValueComparator{}.equals(thisValue, arg0Value));
 })
 
 BUILTIN(Boolean, or, {

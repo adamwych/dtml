@@ -66,7 +66,7 @@ Value *Interpreter::evaluateFunctionCall(const FunctionCallExpression *expr) {
 }
 
 Value *Interpreter::evaluate(const Expression *expr) {
-    switch (expr->getType()) {
+    switch (expr->type) {
     case ExpressionType::Token:
         return evaluateToken(expr->asToken());
     case ExpressionType::MemberAccess:
@@ -117,11 +117,15 @@ Value *Interpreter::evaluateInterpolatedString(const String &text) {
 
         auto expression = text.substr(expressionStart, interpolationEnd - expressionStart);
         auto value = evaluate(expression);
-        out.append(printValueSafe(value));
+
+        ValuePrinter printer;
+        printer.skipContainers = true;
+        printer.quoteStrings = false;
+        out.append(printer.print(value));
 
         cursor = interpolationEnd + 1;
     }
 
-    return new StringValue(out);
+    return new StringValue(std::move(out));
 }
 } // namespace tel
