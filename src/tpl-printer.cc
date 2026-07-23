@@ -61,6 +61,10 @@ void TemplatePrinter::printElementAttributes(const Map<StringView, String> &attr
     }
 
     for (auto [attributeName, attributeValue] : attributes) {
+        if (attributeValue == "false") {
+            continue;
+        }
+
         raw(' ');
         raw(attributeName);
         raw('=');
