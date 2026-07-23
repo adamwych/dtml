@@ -1,6 +1,9 @@
 #include "tpl-printer.hh"
 
 namespace dtml {
+static Vector<String> voidTags = {"area",  "base", "br",   "col",   "embed",  "hr",    "img",
+                                  "input", "link", "meta", "param", "source", "track", "wbr"};
+
 void TemplatePrinter::enablePrinting() {
     if (_disabledDepth > 0) {
         _disabledDepth--;
@@ -39,9 +42,14 @@ void TemplatePrinter::printElementSignature(const StringView &name,
     printElementAttributes(attributes);
 
     if (isSelfClosing) {
-        raw("></");
-        raw(name);
-        raw(">");
+        auto isVoidTag = std::find(voidTags.begin(), voidTags.end(), name) != voidTags.end();
+        if (isVoidTag) {
+            raw("/>");
+        } else {
+            raw("></");
+            raw(name);
+            raw(">");
+        }
     } else {
         raw(">");
     }

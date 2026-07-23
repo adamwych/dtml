@@ -33,7 +33,6 @@ TEST_CASE("tpl: parse elements") {
     CHECK_OK("<numbers-in-123></numbers-in-123>", "<numbers-in-123></numbers-in-123>");
     CHECK_OK("<namespace:foo></namespace:foo>", "<namespace:foo></namespace:foo>");
     CHECK_OK("<under_scored></under_scored>", "<under_scored></under_scored>");
-    CHECK_OK("<expand-voids />", "<expand-voids></expand-voids>");
     CHECK_OK("<foo><!-- ignore comments --></foo>", "<foo></foo>");
     CHECK_OK("<!-- <foo></foo> -->", "");
     CHECK_OK("<parent><child><childchild></childchild></child></parent>",
@@ -56,6 +55,15 @@ TEST_CASE("tpl: parse elements") {
     CHECK_FAIL("<b>foo <i>bar</b> baz</i>", "mismatched element end tag");
     CHECK_FAIL("<foo></bar>", "mismatched element end tag");
     CHECK_FAIL("<element></element", "unexpected end of file while parsing element tag name");
+}
+
+TEST_CASE("tpl: void elements") {
+    // HTML defines a couple void elements which are allowed to use the shorter notation ...
+    CHECK_OK("<meta charset=\"utf-8\" />", "<meta charset=\"utf-8\"/>");
+    CHECK_OK("<link rel=\"stylesheet\" />", "<link rel=\"stylesheet\"/>");
+
+    // ... but we also allow custom elements to use that notation, and we expand them to legal HTML.
+    CHECK_OK("<expand-voids />", "<expand-voids></expand-voids>");
 }
 
 TEST_CASE("tpl: evaluate elements") {
