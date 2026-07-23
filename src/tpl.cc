@@ -356,7 +356,16 @@ bool TemplateEvaluator::evaluateElementEnd() {
         return false;
     }
 
-    _c.advance();
+    if (!_c.isWhitespace()) {
+        _c.advance();
+    }
+
+    while (_c.isWhitespace()) {
+        if (!_c.advance()) {
+            return error("unexpected end of file while parsing element end tag");
+        }
+    }
+
     _c.eat(">");
 
     if (_ctx->elementStack.empty()) {

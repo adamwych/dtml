@@ -38,15 +38,19 @@ TEST_CASE("tpl: parse elements") {
     CHECK_OK("<parent><child><childchild></childchild></child></parent>",
              "<parent><child><childchild></childchild></child></parent>");
     CHECK_OK("<newline>\nBar\n</newline>", "<newline>\nBar\n</newline>");
-    CHECK_OK("<foo"
+    CHECK_OK("<foo\n"
              "	one=\"one\""
              "	two=\"line1"
-             "line2\""
-             ">"
+             "line2\"\n"
+             ">\n"
              "</foo>",
-             "<foo one=\"one\" two=\"line1line2\"></foo>");
+             "<foo one=\"one\" two=\"line1line2\">\n</foo>");
     CHECK_OK("<textarea readonly class=\"test\"></textarea>",
              "<textarea class=\"test\" readonly=\"true\"></textarea>");
+    CHECK_OK("<end-new-line>"
+             "</end-new-line\n"
+             ">",
+             "<end-new-line></end-new-line>");
 
     CHECK_FAIL("<foo>Bar", "element 'foo' is not closed");
     CHECK_FAIL("<foo attr=1223></foo>", "element attribute value must be quoted");
