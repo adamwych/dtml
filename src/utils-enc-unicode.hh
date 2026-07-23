@@ -1,7 +1,7 @@
 #pragma once
 
 #include "common.hh"
-#include "third-party/utfcpp/source/utf8.h"
+#include "third-party/utfcpp/source/utf8/core.h"
 
 #include <iterator>
 
@@ -64,11 +64,7 @@ void appendUnicodeCodePoint(String *out, utf8::utfchar32_t codePoint) {
         return;
     }
 
-    try {
-        utf8::append(codePoint, *out);
-    } catch (const utf8::exception &) {
-        appendReplacementCodePoint(out);
-    }
+    utf8::internal::append(codePoint, std::back_inserter(*out));
 }
 
 void skipInvalidUtf8Sequence(String::const_iterator *it, String::const_iterator end,

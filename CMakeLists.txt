@@ -16,7 +16,11 @@ set(SOURCES
 )
 
 if(EMSCRIPTEN)
-    set(CMAKE_BUILD_TYPE Release CACHE STRING "Build type" FORCE)
+    # set(CMAKE_BUILD_TYPE Release CACHE STRING "Build type" FORCE)
+    if("${CMAKE_BUILD_TYPE}" STREQUAL "")
+        set(CMAKE_BUILD_TYPE MinSizeRel CACHE STRING "Build type" FORCE)
+    endif()
+    set(CMAKE_CXX_FLAGS_MINSIZEREL "-Oz -DNDEBUG -fno-exceptions" CACHE STRING "MinSizeRel flags" FORCE)
 
     add_executable(dtml ${SOURCES})
 
@@ -50,11 +54,13 @@ if(EMSCRIPTEN)
         "SHELL:-sEXPORT_NAME=createDTMLModule"
         "SHELL:-sENVIRONMENT=web,worker"
         "SHELL:-sEXPORTED_FUNCTIONS=${dtml_EXPORTED_FUNCTIONS}"
-        "SHELL:-sEXPORTED_RUNTIME_METHODS=[\"ccall\",\"cwrap\",\"UTF8ToString\"]"
+        "SHELL:-sEXPORTED_RUNTIME_METHODS=[\"cwrap\",\"UTF8ToString\"]"
         "SHELL:-sFILESYSTEM=0"
-        "SHELL:-sASSERTIONS=1"
+        "SHELL:-sASSERTIONS=0"
+        "SHELL:-sMALLOC=emmalloc"
         "SHELL:-sSTACK_SIZE=131072"
         "SHELL:-sASYNCIFY=1"
+        "SHELL:-sASYNCIFY_IGNORE_INDIRECT=1"
         "SHELL:-sASYNCIFY_STACK_SIZE=131072"
     )
 else()

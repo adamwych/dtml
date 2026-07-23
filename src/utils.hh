@@ -4,7 +4,6 @@
 
 #include <charconv>
 #include <memory>
-#include <stdexcept>
 #include <string>
 #include <string_view>
 
@@ -30,7 +29,7 @@ static bool stringEndsWith(const String &str, const String &with) {
 template <typename... Args> static String format(const String &fmt, Args... args) {
     int size_s = std::snprintf(nullptr, 0, fmt.c_str(), args...) + 1; // Extra space for '\0'
     if (size_s <= 0) {
-        throw std::runtime_error("Error during formatting.");
+        return "";
     }
     auto size = static_cast<size_t>(size_s);
     std::unique_ptr<char[]> buf(new char[size]);

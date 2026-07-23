@@ -1,7 +1,7 @@
 #pragma once
 
 #include "common.hh"
-#include "third-party/utfcpp/source/utf8.h"
+#include "third-party/utfcpp/source/utf8/core.h"
 
 namespace dtml {
 namespace detail {
@@ -63,11 +63,7 @@ bool decodeHTMLNumericEntity(const String &entity, String *out) {
         return true;
     }
 
-    try {
-        utf8::append(codePoint, *out);
-    } catch (const utf8::exception &) {
-        return false;
-    }
+    utf8::internal::append(codePoint, std::back_inserter(*out));
     return true;
 }
 
