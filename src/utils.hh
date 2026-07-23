@@ -2,9 +2,11 @@
 
 #include "common.hh"
 
+#include <charconv>
 #include <memory>
 #include <stdexcept>
 #include <string>
+#include <string_view>
 
 static bool stringStartsWith(const String &str, const String &with) {
     if (str.length() < with.length()) {
@@ -25,7 +27,7 @@ static bool stringEndsWith(const String &str, const String &with) {
     return slice == with;
 }
 
-template <typename... Args> std::string format(const std::string &fmt, Args... args) {
+template <typename... Args> static String format(const String &fmt, Args... args) {
     int size_s = std::snprintf(nullptr, 0, fmt.c_str(), args...) + 1; // Extra space for '\0'
     if (size_s <= 0) {
         throw std::runtime_error("Error during formatting.");
@@ -33,7 +35,16 @@ template <typename... Args> std::string format(const std::string &fmt, Args... a
     auto size = static_cast<size_t>(size_s);
     std::unique_ptr<char[]> buf(new char[size]);
     std::snprintf(buf.get(), size, fmt.c_str(), args...);
-    return std::string(buf.get(), buf.get() + size - 1); // We don't want the '\0' inside
+    return String(buf.get(), buf.get() + size - 1); // We don't want the '\0' inside
+}
+
+static Option<double> parseDouble(const StringView &s) {
+    double value{};
+    auto [ptr, ec] = std::from_chars(s.data(), s.data() + s.size(), value);
+    if (ec != std::errc{} || ptr != s.data() + s.size()) {
+        return Nullopt;
+    }
+    return value;
 }
 
 static String replaceCustomProtocol(const String &src, const Map<String, String> &replacements) {

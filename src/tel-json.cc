@@ -1,5 +1,6 @@
 #include "tel-json.hh"
 #include "utils-enc-unicode.hh"
+#include "utils.hh"
 
 #include <iomanip>
 #include <iostream>
@@ -68,11 +69,11 @@ static Value *parseJsonPrimitive(JsonParseContext *ctx) {
     } else if (tokenValue == "null") {
         return new NullValue();
     } else {
-        try {
-            return new NumberValue(std::stod(String(tokenValue)));
-        } catch (std::exception) {
-            return new NullValue();
+        auto parseResult = parseDouble(tokenValue);
+        if (parseResult.has_value()) {
+            return new NumberValue(*parseResult);
         }
+        return new NullValue();
     }
 
     return new NullValue();
