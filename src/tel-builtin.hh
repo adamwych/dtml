@@ -53,6 +53,10 @@ BUILTIN_STANDALONE(stringify, {
 BUILTIN(Number, round, {
 	return new StringValue(std::to_string(static_cast<int>(::round(thisNumber))));
 })
+
+BUILTIN(Array, length, {
+	return new NumberValue(thisArray.size());
+})
 /* clang-format on */
 
 BUILTIN_STANDALONE(contains, {
@@ -102,6 +106,7 @@ static Value *call(const FunctionCall &call) {
     TRY(stringify_, "stringify");
     TRY(round_, "round");
     TRY(contains_, "contains");
+    TRY(length_, "length");
     TRY(is_, "is");
     TRY(not_, "not");
     TRY(or_, "or");
