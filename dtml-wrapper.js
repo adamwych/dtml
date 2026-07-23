@@ -23,10 +23,14 @@ async function createDTML() {
             async: true
         }
     )
+    const templateCacheAdd = m.cwrap('dtml_TemplateCache_Add', 'void', ['number', 'string', 'string'])
 
     const cachePtr = m._dtml_TemplateCache_New()
 
     return {
+        addToTemplateCache(url, text) {
+            templateCacheAdd(cachePtr, url, text)
+        },
         clearTemplateCache() {
             m._dtml_TemplateCache_Clear(cachePtr)
         },

@@ -27,6 +27,12 @@ EXPORT TemplateCache *dtml_TemplateCache_New() {
 EXPORT void dtml_TemplateCache_Free(TemplateCache *self) {
     delete self;
 }
+EXPORT void dtml_TemplateCache_Add(TemplateCache *self, const char* key, const char *text) {
+    self->fetchCache[key] = FetchResponse {
+		.statusCode = 200,
+		.text = text
+	};
+}
 EXPORT void dtml_TemplateCache_Clear(TemplateCache *self) {
     self->fetchCache.clear();
 }
